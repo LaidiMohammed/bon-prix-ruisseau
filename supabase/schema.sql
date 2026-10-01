@@ -13,6 +13,10 @@ create table if not exists products (
   image text not null default '',
   tag text,
   rating numeric not null default 5,
+  stock integer not null default 10,
+  players text[] not null default '{}',
+  description text not null default '',
+  description_ar text not null default '',
   created_at timestamptz not null default now()
 );
 

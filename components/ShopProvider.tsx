@@ -12,6 +12,7 @@ import {
   readLS,
   writeLS,
   genOrderId,
+  unitPrice,
   type CartItem,
   type Order,
   type OrderStatus,
@@ -21,10 +22,13 @@ import { deliveryFee } from "@/lib/delivery";
 const CART_KEY = "bpr-cart-v2";
 const ORDERS_KEY = "bpr-orders-v2";
 
+const sameItem = (i: CartItem, productId: string, size: string, flocageLabel?: string) =>
+  i.productId === productId && i.size === size && (i.flocageLabel ?? "") === (flocageLabel ?? "");
+
 type ShopCtx = {
   items: CartItem[];
   add: (item: Omit<CartItem, "qty">, qty?: number) => void;
-  setQty: (productId: string, size: string, qty: number) => void;
+  setQty: (productId: string, size: string, flocageLabel: string | undefined, qty: number) => void;
   clearCart: () => void;
   count: number;
   subtotal: number;
@@ -52,12 +56,12 @@ export function ShopProvider({ children }: { children: ReactNode }) {
 
   const add = useCallback(
     (item: Omit<CartItem, "qty">, qty = 1) => {
-      const found = items.find(
-        (i) => i.productId === item.productId && i.size === item.size
+      const found = items.find((i) =>
+        sameItem(i, item.productId, item.size, item.flocageLabel)
       );
       const next = found
         ? items.map((i) =>
-            i.productId === item.productId && i.size === item.size
+            sameItem(i, item.productId, item.size, item.flocageLabel)
               ? { ...i, qty: i.qty + qty }
               : i
           )
@@ -69,12 +73,12 @@ export function ShopProvider({ children }: { children: ReactNode }) {
   );
 
   const setQty = useCallback(
-    (productId: string, size: string, qty: number) => {
+    (productId: string, size: string, flocageLabel: string | undefined, qty: number) => {
       saveItems(
         qty <= 0
-          ? items.filter((i) => !(i.productId === productId && i.size === size))
+          ? items.filter((i) => !sameItem(i, productId, size, flocageLabel))
           : items.map((i) =>
-              i.productId === productId && i.size === size ? { ...i, qty } : i
+              sameItem(i, productId, size, flocageLabel) ? { ...i, qty } : i
             )
       );
     },
@@ -92,7 +96,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     (
       draft: Omit<Order, "id" | "date" | "status" | "subtotal" | "fee" | "total">
     ) => {
-      const subtotal = draft.items.reduce((n, i) => n + i.qty * i.price, 0);
+      const subtotal = draft.items.reduce((n, i) => n + i.qty * unitPrice(i), 0);
       const fee = deliveryFee(draft.wilayaCode, draft.delivery);
       const order: Order = {
         ...draft,
@@ -128,7 +132,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       setQty,
       clearCart,
       count: items.reduce((n, i) => n + i.qty, 0),
-      subtotal: items.reduce((n, i) => n + i.qty * i.price, 0),
+      subtotal: items.reduce((n, i) => n + i.qty * unitPrice(i), 0),
       cartOpen,
       setCartOpen,
       orders,

@@ -9,7 +9,12 @@ export type CartItem = {
   price: number;
   image: string;
   qty: number;
+  flocageLabel?: string; // e.g. "MBAPPÉ 9" or "MON NOM 10" — empty = none
+  flocagePrice?: number;
 };
+
+export const unitPrice = (i: Pick<CartItem, "price" | "flocagePrice">) =>
+  i.price + (i.flocagePrice ?? 0);
 
 export type OrderStatus = "pending" | "validated" | "cancelled" | "delivered";
 

@@ -11,6 +11,8 @@ export type Product = {
   rating: number;
   description: string;
   descriptionAr: string;
+  stock: number; // admin sees the number, clients only see En stock / Rupture
+  players: string[]; // preset flocage names for this shirt
 };
 
 export const CATEGORIES = [
@@ -74,6 +76,8 @@ export const PRODUCTS: Product[] = [
     image: img(30314840),
     tag: "Best-seller",
     rating: 4.9,
+    stock: 24,
+    players: ["SALAH 11","VAN DIJK 4","WIRTZ 7"],
     description: "Maillot domicile Liverpool 26/27 — tissu respirant, écusson brodé, coupe supporters.",
     descriptionAr: "قميص ليفربول الأساسي 26/27 — قماش يتنفس، شعار مطرز.",
   },
@@ -87,6 +91,8 @@ export const PRODUCTS: Product[] = [
     image: img(37702263),
     tag: "Nouveau",
     rating: 4.8,
+    stock: 18,
+    players: ["FERNANDES 8","CUNHA 10","DIALLO 16"],
     description: "Maillot domicile Man United 26/27 — rouge diable, matière premium anti-transpirante.",
     descriptionAr: "قميص مان يونايتد الأساسي 26/27 — أحمر الشياطين بجودة عالية.",
   },
@@ -100,6 +106,8 @@ export const PRODUCTS: Product[] = [
     sizes: ["S", "M", "L", "XL", "XXL"],
     image: img(15837447),
     rating: 4.8,
+    stock: 15,
+    players: ["SAKA 7","ODEGAARD 8","RICE 41"],
     description: "Maillot domicile Arsenal 26/27 — rouge & blanc canonniers, finition premium.",
     descriptionAr: "قميص أرسنال الأساسي 26/27 — أحمر وأبيض بلمسة فاخرة.",
   },
@@ -113,6 +121,8 @@ export const PRODUCTS: Product[] = [
     image: img(37331795),
     tag: "Nouveau",
     rating: 4.7,
+    stock: 12,
+    players: ["HAALAND 9","FODEN 47","RODRI 16"],
     description: "Maillot domicile Man City 26/27 — bleu ciel, technologie dry-fit, coupe moderne.",
     descriptionAr: "قميص مان سيتي الأساسي 26/27 — أزرق سماوي بقصّة عصرية.",
   },
@@ -125,6 +135,8 @@ export const PRODUCTS: Product[] = [
     sizes: ["S", "M", "L", "XL", "XXL"],
     image: img(36068667),
     rating: 4.7,
+    stock: 9,
+    players: ["PALMER 20","CAICEDO 25","FERNANDEZ 8"],
     description: "Maillot domicile Chelsea 26/27 — bleu roi, tissu léger, style Stamford Bridge.",
     descriptionAr: "قميص تشيلسي الأساسي 26/27 — أزرق ملكي خفيف.",
   },
@@ -139,6 +151,8 @@ export const PRODUCTS: Product[] = [
     image: img(18256095),
     tag: "Limited",
     rating: 4.6,
+    stock: 4,
+    players: ["SOLANKE 19","MADDISON 10","KULUSEVSKI 21"],
     description: "Maillot domicile Tottenham 26/27 — blanc pur, édition limitée, coupe slim.",
     descriptionAr: "قميص توتنهام الأساسي 26/27 — أبيض، إصدار محدود.",
   },
@@ -153,6 +167,8 @@ export const PRODUCTS: Product[] = [
     image: img(14984376),
     tag: "Promo",
     rating: 4.8,
+    stock: 7,
+    players: ["SALAH 11","VAN DIJK 4","WIRTZ 7"],
     description: "Maillot extérieur Liverpool 26/27 — coloris away exclusif, prix promo.",
     descriptionAr: "قميص ليفربول الاحتياطي 26/27 — بسعر التخفيض.",
   },
@@ -166,6 +182,8 @@ export const PRODUCTS: Product[] = [
     image: img(8289408),
     tag: "Promo",
     rating: 4.9,
+    stock: 20,
+    players: ["SALAH 11","HAALAND 9","SAKA 7"],
     description: "Ensemble Premier League enfant 26/27 — maillot + short, tailles 6 à 14 ans.",
     descriptionAr: "طقم أطفال 26/27 — قميص + شورت، من 6 إلى 14 سنة.",
   },
@@ -197,6 +215,10 @@ export const TIKTOK_REELS = [
     label: "Ambiance PL ❤️🖤",
   },
 ];
+
+export const FLOCAGE_PRICES = { player: 500, custom: 800 };
+
+export const STAR_FLOCK = ["MBAPPÉ 9", "VINI JR 7", "BELLINGHAM 5", "SALAH 11", "HAALAND 9"];
 
 export const fmtDA = (n: number) =>
   `${n.toLocaleString("fr-DZ").replace(/,/g, " ")} DA`;

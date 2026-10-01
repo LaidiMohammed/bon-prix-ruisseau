@@ -4,7 +4,7 @@ import QRCode from "react-qr-code";
 import { PackageSearch } from "lucide-react";
 import { DELIVERY_LABEL } from "@/lib/delivery";
 import { fmtDA } from "@/lib/mock-data";
-import { orderUrl, STATUS_LABEL, type Order } from "@/lib/orders";
+import { orderUrl, STATUS_LABEL, unitPrice, type Order } from "@/lib/orders";
 import { pad2 } from "@/lib/wilayas";
 
 export function statusColor(s: Order["status"]) {
@@ -41,8 +41,8 @@ export function OrderCard({ order, showQr = true }: { order: Order; showQr?: boo
           <div key={`${i.productId}-${i.size}`} className="flex items-center gap-3 text-sm">
             {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={i.image} alt="" className="h-12 w-10 rounded-xl object-cover" />
-            <span className="flex-1 truncate">{i.name} <span className="text-cream/50">× {i.qty} ({i.size})</span></span>
-            <b>{fmtDA(i.qty * i.price)}</b>
+            <span className="flex-1 truncate">{i.name} <span className="text-cream/50">× {i.qty} ({i.size})</span>{i.flocageLabel ? <span className="block text-xs font-bold text-gold">✍ {i.flocageLabel}</span> : null}</span>
+            <b>{fmtDA(i.qty * unitPrice(i))}</b>
           </div>
         ))}
       </div>

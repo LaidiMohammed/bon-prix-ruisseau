@@ -195,7 +195,10 @@ export default function AdminPage() {
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold">{p.name}</p>
                     <p className="text-xs text-cream/50">
-                      {p.category} • {fmtDA(p.price)} • {p.sizes.join("/")}
+                      {p.category} • {fmtDA(p.price)} • {p.sizes.join("/")} •{" "}
+                      <span className={`font-black ${(p.stock ?? 10) > 5 ? "text-[#25D366]" : (p.stock ?? 10) > 0 ? "text-gold" : "text-red-300"}`}>
+                        Stock: {p.stock ?? 10}
+                      </span>
                     </p>
                     {p.description ? (
                       <p className="mt-0.5 truncate text-xs text-cream/40">{p.description}</p>

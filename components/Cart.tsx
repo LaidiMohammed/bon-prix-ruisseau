@@ -5,6 +5,7 @@ import { Minus, Plus, ShoppingBag, Trash2, X } from "lucide-react";
 import Link from "next/link";
 import { useShop } from "./ShopProvider";
 import { fmtDA } from "@/lib/mock-data";
+import { unitPrice } from "@/lib/orders";
 
 export function CartFab() {
   const { count, setCartOpen } = useShop();
@@ -83,7 +84,7 @@ export function CartDrawer() {
                 <div className="space-y-3">
                   {items.map((i) => (
                     <div
-                      key={`${i.productId}-${i.size}`}
+                      key={`${i.productId}-${i.size}-${i.flocageLabel ?? "plain"}`}
                       className="flex gap-3 rounded-3xl border border-white/10 bg-ink p-3"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -91,10 +92,15 @@ export function CartDrawer() {
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold">{i.name}</p>
                         <p className="text-xs text-cream/50">Taille: {i.size}</p>
-                        <p className="mt-0.5 text-sm font-black text-gold">{fmtDA(i.price)}</p>
+                        {i.flocageLabel ? (
+                          <p className="mt-0.5 truncate text-xs font-bold text-gold">
+                            ✍ {i.flocageLabel} <span className="font-normal text-cream/50">(+{fmtDA(i.flocagePrice ?? 0)})</span>
+                          </p>
+                        ) : null}
+                        <p className="mt-0.5 text-sm font-black text-cream">{fmtDA(unitPrice(i))}</p>
                         <div className="mt-2 flex items-center gap-2">
                           <button
-                            onClick={() => setQty(i.productId, i.size, i.qty - 1)}
+                            onClick={() => setQty(i.productId, i.size, i.flocageLabel, i.qty - 1)}
                             className="grid h-7 w-7 place-items-center rounded-full bg-white/10 hover:bg-signal"
                             aria-label="Moins"
                           >
@@ -102,7 +108,7 @@ export function CartDrawer() {
                           </button>
                           <span className="w-6 text-center text-sm font-black">{i.qty}</span>
                           <button
-                            onClick={() => setQty(i.productId, i.size, i.qty + 1)}
+                            onClick={() => setQty(i.productId, i.size, i.flocageLabel, i.qty + 1)}
                             className="grid h-7 w-7 place-items-center rounded-full bg-white/10 hover:bg-signal"
                             aria-label="Plus"
                           >

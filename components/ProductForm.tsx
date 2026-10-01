@@ -53,6 +53,7 @@ export default function ProductForm({
     initial?.category ?? (CATEGORIES[1] as string)
   );
   const [sizes, setSizes] = useState((initial?.sizes ?? ["S", "M", "L", "XL"]).join(", "));
+  const [stock, setStock] = useState(String(initial?.stock ?? 10));
   const [image, setImage] = useState(initial?.image ?? "");
   const [tag, setTag] = useState(initial?.tag ?? "");
   const [error, setError] = useState("");
@@ -69,6 +70,7 @@ export default function ProductForm({
 
   const save = () => {
     const p = Number(price);
+    const st = Number(stock);
     if (name.trim().length < 2) return setError("Nom du produit requis");
     if (!Number.isFinite(p) || p <= 0) return setError("Prix invalide (ex: 3200)");
     if (!image) return setError("Ajoute une photo (appareil ou lien)");
@@ -84,6 +86,8 @@ export default function ProductForm({
       image,
       tag: tag.trim() || undefined,
       rating: initial?.rating ?? 5,
+      stock: Number.isFinite(st) && st >= 0 ? Math.floor(st) : 0,
+      players: initial?.players ?? [],
       description: description.trim(),
       descriptionAr: descriptionAr.trim(),
     });
@@ -153,6 +157,10 @@ export default function ProductForm({
         <label className="block">
           <span className="mb-1 block text-[11px] font-black tracking-widest text-cream/60 uppercase">Ancien prix (promo, optionnel)</span>
           <input value={oldPrice} onChange={(e) => setOldPrice(e.target.value)} placeholder="3800" inputMode="numeric" className={inputCls} />
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-[11px] font-black tracking-widest text-cream/60 uppercase">Quantité en stock *</span>
+          <input value={stock} onChange={(e) => setStock(e.target.value)} placeholder="10 — 0 = rupture" inputMode="numeric" className={inputCls} />
         </label>
         <label className="block">
           <span className="mb-1 block text-[11px] font-black tracking-widest text-cream/60 uppercase">Catégorie</span>

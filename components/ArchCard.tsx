@@ -42,6 +42,13 @@ export default function ArchCard({
           <span className="absolute bottom-3 left-3 flex items-center gap-1 rounded-full bg-ink/70 px-2.5 py-1 text-[11px] font-bold text-gold backdrop-blur">
             <Star size={12} fill="currentColor" /> {product.rating}
           </span>
+          <span
+            className={`absolute right-3 bottom-3 rounded-full px-2.5 py-1 text-[10px] font-black tracking-widest uppercase backdrop-blur ${
+              (product.stock ?? 10) > 0 ? "bg-[#25D366]/85 text-ink" : "bg-signal/90 text-white"
+            }`}
+          >
+            {(product.stock ?? 10) > 0 ? "● En stock" : "Rupture"}
+          </span>
         </div>
         <div className="p-4 pb-5 text-center">
           <p className="text-[10px] font-black tracking-[0.25em] text-signal uppercase">

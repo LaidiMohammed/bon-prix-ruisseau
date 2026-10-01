@@ -3,8 +3,10 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { MessageCircle, ShoppingBag, Star, X } from "lucide-react";
 import { useState } from "react";
-import { fmtDA, type Product } from "@/lib/mock-data";
+import { fmtDA, FLOCAGE_PRICES, STAR_FLOCK, type Product } from "@/lib/mock-data";
 import { useShop } from "./ShopProvider";
+
+type FlockMode = "none" | "player" | "custom";
 
 export default function QuickView({
   product,
@@ -15,6 +17,10 @@ export default function QuickView({
 }) {
   const [size, setSize] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
+  const [flock, setFlock] = useState<FlockMode>("none");
+  const [flockPlayer, setFlockPlayer] = useState("");
+  const [flockName, setFlockName] = useState("");
+  const [flockNumber, setFlockNumber] = useState("");
   const { add } = useShop();
 
   // reset when another product opens
@@ -24,7 +30,28 @@ export default function QuickView({
     setLastPid(pid);
     setSize(null);
     setAdded(false);
+    setFlock("none");
+    setFlockPlayer("");
+    setFlockName("");
+    setFlockNumber("");
   }
+
+  const inStock = (product?.stock ?? 10) > 0;
+  const flockInfo = !product
+    ? { label: undefined as string | undefined, price: 0, ok: true }
+    : flock === "none"
+      ? { label: undefined as string | undefined, price: 0, ok: true }
+      : flock === "player"
+        ? { label: flockPlayer || undefined, price: FLOCAGE_PRICES.player, ok: flockPlayer !== "" }
+        : {
+            label:
+              flockName.trim() !== "" || flockNumber.trim() !== ""
+                ? `${flockName.trim().toUpperCase() || "MON NOM"}${flockNumber.trim() !== "" ? ` ${flockNumber.trim()}` : ""}`.trim()
+                : undefined,
+            price: FLOCAGE_PRICES.custom,
+            ok: flockName.trim() !== "" || flockNumber.trim() !== "",
+          };
+  const canAdd = !!product && !!size && inStock && flockInfo.ok;
 
   return (
     <AnimatePresence>
@@ -78,14 +105,75 @@ export default function QuickView({
                   ) : null}
                 </p>
               ) : null}
-              <div className="mt-3 flex items-baseline gap-3">
+              <div className="mt-3 flex flex-wrap items-center gap-3">
                 <span className="text-3xl font-black">{fmtDA(product.price)}</span>
                 {product.oldPrice && (
                   <span className="text-cream/40 line-through">
                     {fmtDA(product.oldPrice)}
                   </span>
                 )}
+                <span
+                  className={`rounded-full px-3 py-1 text-[11px] font-black tracking-widest uppercase ${
+                    inStock ? "bg-[#25D366]/15 text-[#25D366]" : "bg-signal/15 text-red-300"
+                  }`}
+                >
+                  {inStock ? "● En stock" : "Rupture"}
+                </span>
               </div>
+              <p className="mt-4 text-sm font-bold tracking-widest text-cream/60 uppercase">
+                Flocage — الطباعة <span className="text-gold normal-case">+{fmtDA(FLOCAGE_PRICES.player)} / +{fmtDA(FLOCAGE_PRICES.custom)}</span>
+              </p>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {(
+                  [
+                    { v: "none", l: "Sans" },
+                    { v: "player", l: "Joueur ⭐" },
+                    { v: "custom", l: "Mon nom ✍" },
+                  ] as { v: FlockMode; l: string }[]
+                ).map((o) => (
+                  <button
+                    key={o.v}
+                    onClick={() => setFlock(o.v)}
+                    className={`rounded-2xl px-2 py-2.5 text-xs font-black transition ${
+                      flock === o.v ? "bg-gold text-ink" : "bg-white/10 hover:bg-white/20"
+                    }`}
+                  >
+                    {o.l}
+                  </button>
+                ))}
+              </div>
+              {flock === "player" && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {[...(product.players ?? []), ...STAR_FLOCK.filter((s) => !(product.players ?? []).includes(s))].map((pl) => (
+                    <button
+                      key={pl}
+                      onClick={() => setFlockPlayer(pl)}
+                      className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
+                        flockPlayer === pl ? "bg-signal text-white" : "bg-white/10 hover:bg-white/20"
+                      }`}
+                    >
+                      {pl}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {flock === "custom" && (
+                <div className="mt-2 grid grid-cols-2 gap-2">
+                  <input
+                    value={flockName}
+                    onChange={(e) => setFlockName(e.target.value.slice(0, 14))}
+                    placeholder="Ton nom — اسمك"
+                    className="rounded-2xl border border-white/12 bg-ink px-4 py-2.5 text-sm outline-none focus:border-gold"
+                  />
+                  <input
+                    value={flockNumber}
+                    onChange={(e) => setFlockNumber(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                    placeholder="N° — 7"
+                    inputMode="numeric"
+                    className="rounded-2xl border border-white/12 bg-ink px-4 py-2.5 text-sm outline-none focus:border-gold"
+                  />
+                </div>
+              )}
               <p className="mt-4 text-sm font-bold tracking-widest text-cream/60 uppercase">
                 Taille — اختر المقاس
               </p>
@@ -106,30 +194,40 @@ export default function QuickView({
               </div>
               <button
                 onClick={() => {
-                  if (!product || !size) return;
+                  if (!product || !canAdd) return;
                   add({
                     productId: product.id,
                     name: product.name,
-                    size,
+                    size: size as string,
                     price: product.price,
                     image: product.image,
+                    flocageLabel: flockInfo.label,
+                    flocagePrice: flockInfo.price || undefined,
                   });
                   setAdded(true);
                   setTimeout(onClose, 600);
                 }}
-                disabled={!size}
+                disabled={!canAdd}
                 className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full py-3.5 font-black transition ${
-                  size
+                  canAdd
                     ? "bg-signal text-white shadow-xl shadow-signal/30 hover:scale-[1.02]"
                     : "cursor-not-allowed bg-white/10 text-cream/40"
                 }`}
               >
                 <ShoppingBag size={19} />
-                {added ? "Ajouté ✓ — أضيف" : size ? "Ajouter au panier" : "Choisis ta taille d'abord"}
+                {!inStock
+                  ? "Rupture de stock"
+                  : added
+                    ? "Ajouté ✓ — أضيف"
+                    : !size
+                      ? "Choisis ta taille d'abord"
+                      : flock !== "none" && !flockInfo.ok
+                        ? "Choisis ton flocage"
+                        : `Ajouter au panier${flockInfo.price ? ` + ${fmtDA(flockInfo.price)}` : ""}`}
               </button>
               <a
                 href={`https://wa.me/213550000000?text=${encodeURIComponent(
-                  `Salam BPR, je veux: ${product.name} (${size ?? "taille à confirmer"}) — ${fmtDA(product.price)}`
+                  `Salam BPR, je veux: ${product.name} (${size ?? "taille à confirmer"})${flockInfo.label ? ` + flocage ${flockInfo.label}` : ""} — ${fmtDA(product.price + flockInfo.price)}`
                 )}`}
                 target="_blank"
                 className="mt-2.5 flex items-center justify-center gap-2 rounded-full border border-[#25D366]/50 py-3 text-sm font-bold text-[#25D366] transition hover:bg-[#25D366]/10"

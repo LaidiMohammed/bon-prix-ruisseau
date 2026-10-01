@@ -17,7 +17,7 @@ const inputCls =
   "w-full rounded-2xl border border-white/12 bg-ink px-4 py-3 text-sm outline-none focus:border-signal";
 
 export default function CommandePage() {
-  const { settings } = useSiteData();
+  const { settings, products, saveProducts } = useSiteData();
   const { items, subtotal, clearCart } = useShop();
   const [wilayas, setWilayas] = useState<Wilaya[]>([]);
   const [name, setName] = useState("");
@@ -116,6 +116,15 @@ export default function CommandePage() {
       notes: notes.trim(),
       items,
     });
+    // décrémente le stock des modèles commandés
+    saveProducts(
+      products.map((p) => {
+        const qty = items
+          .filter((i) => i.productId === p.id)
+          .reduce((n, i) => n + i.qty, 0);
+        return qty > 0 ? { ...p, stock: Math.max(0, (p.stock ?? 0) - qty) } : p;
+      })
+    );
     clearCart();
     setDone(order);
     window.scrollTo(0, 0);

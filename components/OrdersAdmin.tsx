@@ -92,7 +92,7 @@ export default function OrdersAdmin() {
               {o.notes ? ` • «${o.notes}»` : ""}
             </p>
             <p className="mt-1 text-xs text-cream/60">
-              {o.items.map((i) => `${i.name} ×${i.qty} (${i.size})`).join(" • ")}
+              {o.items.map((i) => `${i.name} ×${i.qty} (${i.size})${i.flocageLabel ? ` [✍ ${i.flocageLabel}]` : ""}`).join(" • ")}
             </p>
             <p className="mt-1 text-sm font-black">Total: <span className="text-gold">{fmtDA(o.total)}</span> <span className="font-normal text-cream/50">(articles {fmtDA(o.subtotal)} + livraison {fmtDA(o.fee)})</span></p>
             <div className="mt-3 flex flex-wrap gap-2">
