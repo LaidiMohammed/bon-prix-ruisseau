@@ -9,6 +9,8 @@ export type Product = {
   image: string;
   tag?: string;
   rating: number;
+  description: string;
+  descriptionAr: string;
 };
 
 export const CATEGORIES = [
@@ -72,6 +74,8 @@ export const PRODUCTS: Product[] = [
     image: img(30314840),
     tag: "Best-seller",
     rating: 4.9,
+    description: "Maillot domicile Liverpool 26/27 — tissu respirant, écusson brodé, coupe supporters.",
+    descriptionAr: "قميص ليفربول الأساسي 26/27 — قماش يتنفس، شعار مطرز.",
   },
   {
     id: "united-home-2627",
@@ -83,6 +87,8 @@ export const PRODUCTS: Product[] = [
     image: img(37702263),
     tag: "Nouveau",
     rating: 4.8,
+    description: "Maillot domicile Man United 26/27 — rouge diable, matière premium anti-transpirante.",
+    descriptionAr: "قميص مان يونايتد الأساسي 26/27 — أحمر الشياطين بجودة عالية.",
   },
   {
     id: "arsenal-home-2627",
@@ -94,6 +100,8 @@ export const PRODUCTS: Product[] = [
     sizes: ["S", "M", "L", "XL", "XXL"],
     image: img(15837447),
     rating: 4.8,
+    description: "Maillot domicile Arsenal 26/27 — rouge & blanc canonniers, finition premium.",
+    descriptionAr: "قميص أرسنال الأساسي 26/27 — أحمر وأبيض بلمسة فاخرة.",
   },
   {
     id: "city-home-2627",
@@ -105,6 +113,8 @@ export const PRODUCTS: Product[] = [
     image: img(37331795),
     tag: "Nouveau",
     rating: 4.7,
+    description: "Maillot domicile Man City 26/27 — bleu ciel, technologie dry-fit, coupe moderne.",
+    descriptionAr: "قميص مان سيتي الأساسي 26/27 — أزرق سماوي بقصّة عصرية.",
   },
   {
     id: "chelsea-home-2627",
@@ -115,6 +125,8 @@ export const PRODUCTS: Product[] = [
     sizes: ["S", "M", "L", "XL", "XXL"],
     image: img(36068667),
     rating: 4.7,
+    description: "Maillot domicile Chelsea 26/27 — bleu roi, tissu léger, style Stamford Bridge.",
+    descriptionAr: "قميص تشيلسي الأساسي 26/27 — أزرق ملكي خفيف.",
   },
   {
     id: "spurs-home-2627",
@@ -127,6 +139,8 @@ export const PRODUCTS: Product[] = [
     image: img(18256095),
     tag: "Limited",
     rating: 4.6,
+    description: "Maillot domicile Tottenham 26/27 — blanc pur, édition limitée, coupe slim.",
+    descriptionAr: "قميص توتنهام الأساسي 26/27 — أبيض، إصدار محدود.",
   },
   {
     id: "liverpool-away-2627",
@@ -139,6 +153,8 @@ export const PRODUCTS: Product[] = [
     image: img(14984376),
     tag: "Promo",
     rating: 4.8,
+    description: "Maillot extérieur Liverpool 26/27 — coloris away exclusif, prix promo.",
+    descriptionAr: "قميص ليفربول الاحتياطي 26/27 — بسعر التخفيض.",
   },
   {
     id: "pl-kids-2627",
@@ -150,6 +166,8 @@ export const PRODUCTS: Product[] = [
     image: img(8289408),
     tag: "Promo",
     rating: 4.9,
+    description: "Ensemble Premier League enfant 26/27 — maillot + short, tailles 6 à 14 ans.",
+    descriptionAr: "طقم أطفال 26/27 — قميص + شورت، من 6 إلى 14 سنة.",
   },
 ];
 

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Flame } from "lucide-react";
+import { Flame, LockKeyhole } from "lucide-react";
 
 const LINKS = [
   { href: "/", label: "Accueil" },
@@ -62,13 +62,23 @@ export default function TopNav({ promo }: { promo: string }) {
             className="h-10 w-auto rounded-lg border border-white/15 shadow-lg shadow-black/50 sm:h-11"
           />
         </button>
-        <a
-          href="https://wa.me/213550000000"
-          target="_blank"
-          className="relative rounded-full bg-signal px-4 py-2 text-xs font-black tracking-widest text-white uppercase shadow-lg shadow-signal/30 transition hover:scale-105 sm:px-5 sm:text-sm md:hidden"
-        >
-          Commander
-        </a>
+        <div className="relative flex items-center gap-2">
+          <Link
+            href="/bpr-studio-2026"
+            aria-label="Admin"
+            title="Admin"
+            className="grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-white/5 text-cream/60 transition hover:border-gold hover:text-gold md:hidden"
+          >
+            <LockKeyhole size={16} />
+          </Link>
+          <a
+            href="https://wa.me/213550000000"
+            target="_blank"
+            className="relative rounded-full bg-signal px-4 py-2 text-xs font-black tracking-widest text-white uppercase shadow-lg shadow-signal/30 transition hover:scale-105 sm:px-5 sm:text-sm md:hidden"
+          >
+            Commander
+          </a>
+        </div>
         <div className="relative hidden items-center gap-1 md:flex">
           {LINKS.map((l) => (
             <Link
@@ -83,6 +93,12 @@ export default function TopNav({ promo }: { promo: string }) {
               {l.label}
             </Link>
           ))}
+          <Link
+            href="/bpr-studio-2026"
+            className="flex items-center gap-1.5 rounded-full border border-white/15 px-3.5 py-2 text-sm font-semibold text-cream/60 transition hover:border-gold hover:text-gold"
+          >
+            <LockKeyhole size={15} /> Admin
+          </Link>
           <a
             href="https://wa.me/213550000000"
             target="_blank"

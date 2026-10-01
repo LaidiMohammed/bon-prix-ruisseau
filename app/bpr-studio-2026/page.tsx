@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { ArrowLeft, Lock, Plus, RotateCcw, Save, Trash2, Unlock } from "lucide-react";
-import { CATEGORIES, fmtDA, type Product } from "@/lib/mock-data";
+import { ArrowLeft, Lock, Pencil, Plus, RotateCcw, Save, Trash2, Unlock } from "lucide-react";
+import { fmtDA, type Product } from "@/lib/mock-data";
 import { useSiteData, type SiteSettings } from "@/lib/store";
 import OrdersAdmin from "@/components/OrdersAdmin";
+import ProductForm from "@/components/ProductForm";
 
 const PASS = "bpr2026";
 
@@ -30,6 +31,8 @@ export default function AdminPage() {
   const [draft, setDraft] = useState<SiteSettings | null>(null);
   const [tab, setTab] = useState<"site" | "products" | "orders">("orders");
   const [saved, setSaved] = useState(false);
+  const [showForm, setShowForm] = useState(false);
+  const [editing, setEditing] = useState<Product | null>(null);
 
   if (!ready) return <p className="p-10 text-center">Chargement…</p>;
   const s = draft ?? settings;
@@ -76,20 +79,6 @@ export default function AdminPage() {
     setDraft(null);
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
-  };
-
-  const addProduct = () => {
-    const p: Product = {
-      id: `p-${Date.now()}`,
-      name: "Nouveau modèle",
-      nameAr: "موديل جديد",
-      category: "Maillots",
-      price: 2900,
-      sizes: ["S", "M", "L", "XL"],
-      image: settings.backgrounds.shop,
-      rating: 5,
-    };
-    saveProducts([p, ...products]);
   };
 
   const delProduct = (id: string) => saveProducts(products.filter((p) => p.id !== id));
@@ -176,9 +165,28 @@ export default function AdminPage() {
           </div>
         ) : (
           <div className="mt-6">
-            <button onClick={addProduct} className="flex items-center gap-2 rounded-full bg-cream px-6 py-3 text-sm font-black text-ink">
-              <Plus size={16} /> Ajouter un modèle
-            </button>
+            {!showForm && (
+              <button onClick={() => { setEditing(null); setShowForm(true); }} className="flex items-center gap-2 rounded-full bg-cream px-6 py-3 text-sm font-black text-ink">
+                <Plus size={16} /> Ajouter un modèle
+              </button>
+            )}
+            {showForm && (
+              <div className="mb-4">
+                <ProductForm
+                  initial={editing ?? undefined}
+                  onSave={(p) => {
+                    if (editing) {
+                      saveProducts(products.map((x) => (x.id === editing.id ? p : x)));
+                    } else {
+                      saveProducts([p, ...products]);
+                    }
+                    setShowForm(false);
+                    setEditing(null);
+                  }}
+                  onCancel={() => { setShowForm(false); setEditing(null); }}
+                />
+              </div>
+            )}
             <div className="mt-4 grid gap-3">
               {products.map((p) => (
                 <div key={p.id} className="flex items-center gap-4 rounded-3xl border border-white/12 bg-coal p-4">
@@ -189,21 +197,18 @@ export default function AdminPage() {
                     <p className="text-xs text-cream/50">
                       {p.category} • {fmtDA(p.price)} • {p.sizes.join("/")}
                     </p>
-                    <div className="mt-2 flex flex-wrap gap-1.5">
-                      {CATEGORIES.filter((c) => c !== "Tous").map((c) => (
-                        <button
-                          key={c}
-                          onClick={() => saveProducts(products.map((x) => (x.id === p.id ? { ...x, category: c } : x)))}
-                          className={`rounded-full px-3 py-1 text-[11px] font-bold ${p.category === c ? "bg-signal text-white" : "bg-white/10"}`}
-                        >
-                          {c}
-                        </button>
-                      ))}
-                    </div>
+                    {p.description ? (
+                      <p className="mt-0.5 truncate text-xs text-cream/40">{p.description}</p>
+                    ) : null}
                   </div>
-                  <button onClick={() => delProduct(p.id)} className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-white/10 text-signal hover:bg-signal hover:text-white" aria-label="Supprimer">
-                    <Trash2 size={17} />
-                  </button>
+                  <div className="flex shrink-0 gap-2">
+                    <button onClick={() => { setEditing(p); setShowForm(true); }} className="grid h-10 w-10 place-items-center rounded-full bg-white/10 hover:bg-gold hover:text-ink" aria-label="Modifier">
+                      <Pencil size={16} />
+                    </button>
+                    <button onClick={() => delProduct(p.id)} className="grid h-10 w-10 place-items-center rounded-full bg-white/10 text-signal hover:bg-signal hover:text-white" aria-label="Supprimer">
+                      <Trash2 size={17} />
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>

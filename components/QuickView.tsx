@@ -70,6 +70,14 @@ export default function QuickView({
               <p className="mt-1 flex items-center gap-1 text-sm text-gold">
                 <Star size={14} fill="currentColor" /> {product.rating} — avis clients vérifiés
               </p>
+              {product.description ? (
+                <p className="mt-3 rounded-2xl bg-white/5 p-3.5 text-sm leading-relaxed text-cream/80">
+                  {product.description}
+                  {product.descriptionAr ? (
+                    <span className="font-arabic mt-1 block text-cream/60">{product.descriptionAr}</span>
+                  ) : null}
+                </p>
+              ) : null}
               <div className="mt-3 flex items-baseline gap-3">
                 <span className="text-3xl font-black">{fmtDA(product.price)}</span>
                 {product.oldPrice && (
