@@ -38,7 +38,9 @@ export default function AdminPage() {
     return (
       <div className="grid min-h-screen place-items-center bg-ink px-5">
         <div className="w-full max-w-sm rounded-[2rem] border border-white/12 bg-coal p-8 text-center">
-          <span className="mx-auto grid h-14 w-14 place-items-center rounded-full bg-signal/15 text-signal">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.jpg" alt="BPR" className="mx-auto h-16 w-auto rounded-2xl border border-white/15" />
+          <span className="mx-auto mt-4 grid h-14 w-14 place-items-center rounded-full bg-signal/15 text-signal">
             <Lock size={24} />
           </span>
           <h1 className="mt-4 font-display text-3xl uppercase">Studio caché</h1>

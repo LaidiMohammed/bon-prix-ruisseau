@@ -24,7 +24,15 @@ export default function HomePage() {
         <HeroVideo videoUrl={settings.heroVideo} />
         <div className="relative mx-auto w-full max-w-6xl px-5 pt-36 pb-16 sm:px-8">
           <Reveal>
-            <p className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[11px] font-black tracking-[0.25em] uppercase backdrop-blur">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo.jpg"
+              alt="Bon Prix Ruisseau Sports"
+              className="h-20 w-auto rounded-2xl border border-white/20 shadow-2xl shadow-black/60 sm:h-24"
+            />
+          </Reveal>
+          <Reveal delay={0.05}>
+            <p className="mt-4 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-1.5 text-[11px] font-black tracking-[0.25em] uppercase backdrop-blur">
               <span className="h-2 w-2 animate-pulse rounded-full bg-signal" />
               Ruisseau • Alger • depuis le quartier
             </p>

@@ -11,10 +11,12 @@ export const metadata: Metadata = {
   title: "Bon Prix Ruisseau Sports — Boutique Alger",
   description:
     "Maillots 2027, survêtements premium, sneakers au Ruisseau, Alger. Qualité haute, prix imbattables. بون بري روسو سبور.",
+  icons: { icon: "/logo.jpg", apple: "/logo.jpg" },
   openGraph: {
     title: "Bon Prix Ruisseau Sports",
     description: "Habille-toi comme un champion ❤️🖤 — Ruisseau, Alger",
     type: "website",
+    images: [{ url: "/logo.jpg", width: 1080, height: 1080 }],
   },
 };
 

@@ -10,15 +10,12 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
       <div className="mx-auto grid max-w-6xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-3">
         <div>
           <div className="flex items-center gap-2.5">
-            <span className="grid h-11 w-11 place-items-center rounded-full bg-cream font-display text-lg text-ink">
-              BP
-            </span>
-            <div className="leading-tight">
-              <p className="font-display text-xl tracking-wide">BON PRIX</p>
-              <p className="text-[10px] font-bold tracking-[0.3em] text-signal">
-                RUISSEAU SPORTS
-              </p>
-            </div>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/logo.jpg"
+              alt="Bon Prix Ruisseau Sports"
+              className="h-14 w-auto rounded-xl border border-white/15"
+            />
           </div>
           <p className="mt-4 max-w-xs text-sm text-cream/60">
             Boutique sport & street au cœur du Ruisseau, Alger. Qualité haute,

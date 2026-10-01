@@ -55,17 +55,12 @@ export default function TopNav({ promo }: { promo: string }) {
           className="relative flex items-center gap-2.5 text-left"
           aria-label="Bon Prix Ruisseau"
         >
-          <span className="grid h-10 w-10 place-items-center rounded-full bg-cream font-display text-lg text-ink">
-            BP
-          </span>
-          <span className="leading-tight">
-            <span className="block font-display text-lg tracking-wide">
-              BON PRIX
-            </span>
-            <span className="block text-[10px] font-bold tracking-[0.3em] text-signal">
-              RUISSEAU SPORTS
-            </span>
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/logo.jpg"
+            alt="Bon Prix Ruisseau Sports"
+            className="h-10 w-auto rounded-lg border border-white/15 shadow-lg shadow-black/50 sm:h-11"
+          />
         </button>
         <a
           href="https://wa.me/213550000000"
