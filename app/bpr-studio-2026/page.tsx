@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ArrowLeft, Lock, Plus, RotateCcw, Save, Trash2, Unlock } from "lucide-react";
 import { CATEGORIES, fmtDA, type Product } from "@/lib/mock-data";
 import { useSiteData, type SiteSettings } from "@/lib/store";
+import OrdersAdmin from "@/components/OrdersAdmin";
 
 const PASS = "bpr2026";
 
@@ -27,7 +28,7 @@ export default function AdminPage() {
   const [unlocked, setUnlocked] = useState(false);
   const [code, setCode] = useState("");
   const [draft, setDraft] = useState<SiteSettings | null>(null);
-  const [tab, setTab] = useState<"site" | "products">("site");
+  const [tab, setTab] = useState<"site" | "products" | "orders">("orders");
   const [saved, setSaved] = useState(false);
 
   if (!ready) return <p className="p-10 text-center">Chargement…</p>;
@@ -122,19 +123,21 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="mt-6 flex gap-2">
-          {(["site", "products"] as const).map((t) => (
+        <div className="mt-6 flex flex-wrap gap-2">
+          {(["orders", "site", "products"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`rounded-full px-6 py-2.5 text-sm font-bold ${tab === t ? "bg-cream text-ink" : "bg-white/10"}`}
             >
-              {t === "site" ? "Site & contenus" : `Produits (${products.length})`}
+              {t === "site" ? "Site & contenus" : t === "orders" ? "Commandes" : `Produits (${products.length})`}
             </button>
           ))}
         </div>
 
-        {tab === "site" ? (
+        {tab === "orders" ? (
+          <OrdersAdmin />
+        ) : tab === "site" ? (
           <div className="mt-6 grid gap-5 md:grid-cols-2">
             <div className="rounded-[1.75rem] border border-white/12 bg-coal p-6">
               <p className="font-display text-xl uppercase">Hero — vidéo d&apos;accueil</p>

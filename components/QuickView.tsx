@@ -1,9 +1,10 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { MessageCircle, Star, X } from "lucide-react";
+import { MessageCircle, ShoppingBag, Star, X } from "lucide-react";
 import { useState } from "react";
 import { fmtDA, type Product } from "@/lib/mock-data";
+import { useShop } from "./ShopProvider";
 
 export default function QuickView({
   product,
@@ -13,6 +14,17 @@ export default function QuickView({
   onClose: () => void;
 }) {
   const [size, setSize] = useState<string | null>(null);
+  const [added, setAdded] = useState(false);
+  const { add } = useShop();
+
+  // reset when another product opens
+  const pid = product?.id;
+  const [lastPid, setLastPid] = useState(pid);
+  if (pid !== lastPid) {
+    setLastPid(pid);
+    setSize(null);
+    setAdded(false);
+  }
 
   return (
     <AnimatePresence>
@@ -84,14 +96,37 @@ export default function QuickView({
                   </button>
                 ))}
               </div>
+              <button
+                onClick={() => {
+                  if (!product || !size) return;
+                  add({
+                    productId: product.id,
+                    name: product.name,
+                    size,
+                    price: product.price,
+                    image: product.image,
+                  });
+                  setAdded(true);
+                  setTimeout(onClose, 600);
+                }}
+                disabled={!size}
+                className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full py-3.5 font-black transition ${
+                  size
+                    ? "bg-signal text-white shadow-xl shadow-signal/30 hover:scale-[1.02]"
+                    : "cursor-not-allowed bg-white/10 text-cream/40"
+                }`}
+              >
+                <ShoppingBag size={19} />
+                {added ? "Ajouté ✓ — أضيف" : size ? "Ajouter au panier" : "Choisis ta taille d'abord"}
+              </button>
               <a
                 href={`https://wa.me/213550000000?text=${encodeURIComponent(
                   `Salam BPR, je veux: ${product.name} (${size ?? "taille à confirmer"}) — ${fmtDA(product.price)}`
                 )}`}
                 target="_blank"
-                className="mt-6 flex items-center justify-center gap-2 rounded-full bg-[#25D366] py-3.5 font-black text-ink transition hover:scale-[1.02]"
+                className="mt-2.5 flex items-center justify-center gap-2 rounded-full border border-[#25D366]/50 py-3 text-sm font-bold text-[#25D366] transition hover:bg-[#25D366]/10"
               >
-                <MessageCircle size={19} /> Commander sur WhatsApp
+                <MessageCircle size={17} /> ou WhatsApp direct
               </a>
               <p className="mt-3 text-center text-xs text-cream/50">
                 Paiement à la livraison • Échange sous 7 jours au magasin Ruisseau

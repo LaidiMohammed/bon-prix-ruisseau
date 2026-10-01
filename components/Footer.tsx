@@ -47,6 +47,8 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
               { href: "/vetements", label: "Vêtements" },
               { href: "/a-propos", label: "À propos" },
               { href: "/magasin", label: "Magasin" },
+              { href: "/suivi", label: "Suivi commande" },
+              { href: "/commande", label: "Commander" },
             ].map((l) => (
               <Link key={l.href} href={l.href} className="text-cream/70 hover:text-cream">
                 {l.label}

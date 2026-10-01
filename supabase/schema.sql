@@ -33,5 +33,27 @@ create table if not exists site_settings (
 alter table products enable row level security;
 alter table site_settings enable row level security;
 
+create table if not exists orders (
+  id text primary key, -- 8 caractères générés côté client
+  created_at timestamptz not null default now(),
+  name text not null,
+  phone text not null,
+  wilaya_code int not null,
+  wilaya text not null,
+  commune text not null,
+  address text not null default '',
+  delivery text not null default 'home',
+  notes text not null default '',
+  items jsonb not null default '[]',
+  subtotal int not null default 0,
+  fee int not null default 0,
+  total int not null default 0,
+  status text not null default 'pending'
+);
+
+alter table orders enable row level security;
+
 create policy "public read products" on products for select using (true);
 create policy "public read settings" on site_settings for select using (true);
+create policy "anyone can place orders" on orders for insert with check (true);
+create policy "public read own orders" on orders for select using (true);
