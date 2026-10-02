@@ -95,4 +95,18 @@ export async function apiTrackOrder(
   return data.order;
 }
 
+// Log BEST-EFFORT d'une tentative de login admin (succès ou échec).
+// Ne bloque jamais le login : les erreurs sont avalées.
+export async function apiLogAdminAttempt(email: string, success: boolean): Promise<void> {
+  try {
+    await fetch("/api/admin-login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, success }),
+    });
+  } catch {
+    /* silencieux */
+  }
+}
+
 export type { OrderStatus };

@@ -836,7 +836,33 @@ insert into site_settings (key, value, value_ar, description) values
 on conflict (key) do nothing;
 
 -- ----------------------------------------------------------------------------
--- 26. VÉRIFICATION (résultat visible dans le SQL Editor)
+-- 26. ADMIN_LOGIN_ATTEMPTS — journal des tentatives de connexion au studio
+-- Qui a essayé d'entrer (email tapé, IP, pays/ville, navigateur, succès/échec).
+-- Lecture réservée admin ; écriture ouverte (la route /api/admin-login limite).
+-- ----------------------------------------------------------------------------
+create table if not exists admin_login_attempts (
+  id          uuid primary key default gen_random_uuid(),
+  email       text not null,                  -- email essayé
+  ip          text not null default '',        -- x-forwarded-for
+  country     text not null default '',        -- x-vercel-ip-country
+  city        text not null default '',        -- x-vercel-ip-city
+  user_agent  text not null default '',        -- navigateur/appareil
+  success     boolean not null default false,  -- connexion réussie ?
+  created_at  timestamptz not null default now()
+);
+comment on table admin_login_attempts is 'Tentatives de login admin : email, IP, géo, navigateur, succès.';
+create index if not exists attempts_created_idx on admin_login_attempts(created_at desc);
+create index if not exists attempts_email_idx on admin_login_attempts(email);
+alter table admin_login_attempts enable row level security;
+drop policy if exists "Log insert" on admin_login_attempts;
+create policy "Log insert" on admin_login_attempts for insert
+  with check (email ~ '^[^@\s]+@[^@\s]+\.[^@\s]+$' and length(email) <= 120);
+drop policy if exists "Log admin" on admin_login_attempts;
+create policy "Log admin" on admin_login_attempts for all
+  using (public.is_admin()) with check (public.is_admin());
+
+-- ----------------------------------------------------------------------------
+-- 27. VÉRIFICATION (résultat visible dans le SQL Editor)
 -- ----------------------------------------------------------------------------
 select 'wilayas' as table_name, count(*) as lignes from wilayas
 union all select 'categories', count(*) from categories
@@ -844,4 +870,5 @@ union all select 'products', count(*) from products
 union all select 'product_variants', count(*) from product_variants
 union all select 'product_images', count(*) from product_images
 union all select 'promos', count(*) from promos
-union all select 'site_settings', count(*) from site_settings;
+union all select 'site_settings', count(*) from site_settings
+union all select 'admin_login_attempts', count(*) from admin_login_attempts;

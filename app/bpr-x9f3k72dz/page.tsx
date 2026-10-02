@@ -5,8 +5,9 @@ import { useState } from "react";
 import { ArrowLeft, Lock, LogOut, Pencil, Plus, RotateCcw, Save, Trash2, Unlock } from "lucide-react";
 import { fmtDA, type Product } from "@/lib/mock-data";
 import { useSiteData, type SiteSettings } from "@/lib/store";
-import { backendEnabled, supabase } from "@/lib/backend";
+import { apiLogAdminAttempt, backendEnabled, supabase } from "@/lib/backend";
 import OrdersAdmin from "@/components/OrdersAdmin";
+import AdminSecurity from "@/components/AdminSecurity";
 import ProductForm from "@/components/ProductForm";
 
 const PASS = "bpr2026"; // mode local uniquement (sans backend)
@@ -34,7 +35,7 @@ export default function AdminPage() {
   const [authError, setAuthError] = useState("");
   const [busy, setBusy] = useState(false);
   const [draft, setDraft] = useState<SiteSettings | null>(null);
-  const [tab, setTab] = useState<"site" | "products" | "orders">("orders");
+  const [tab, setTab] = useState<"site" | "products" | "orders" | "securite">("orders");
   const [saved, setSaved] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
@@ -64,10 +65,16 @@ export default function AdminPage() {
         const r = row as unknown as { role: string; is_active: boolean } | null;
         if (rerr || !r || r.role !== "admin" || !r.is_active) {
           await client.auth.signOut();
+          await apiLogAdminAttempt(email.trim(), false); // intrus ou non-admin
           throw new Error("Compte non admin — accès refusé");
         }
+        await apiLogAdminAttempt(email.trim(), true); // connexion gérant OK
         setUnlocked(true);
       } catch (e) {
+        // Mauvais mot de passe / compte inexistant : on log aussi ( Ips suspects ).
+        if (e instanceof Error && e.message !== "Compte non admin — accès refusé") {
+          await apiLogAdminAttempt(email.trim(), false);
+        }
         setAuthError(e instanceof Error ? e.message : "Connexion impossible");
       } finally {
         setBusy(false);
@@ -192,13 +199,19 @@ export default function AdminPage() {
         </div>
 
         <div className="mt-6 flex flex-wrap gap-2">
-          {(["orders", "site", "products"] as const).map((t) => (
+          {(["orders", "site", "products", "securite"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
               className={`rounded-full px-6 py-2.5 text-sm font-bold ${tab === t ? "bg-cream text-ink" : "bg-white/10"}`}
             >
-              {t === "site" ? "Site & contenus" : t === "orders" ? "Commandes" : `Produits (${products.length})`}
+              {t === "site"
+                ? "Site & contenus"
+                : t === "orders"
+                  ? "Commandes"
+                  : t === "securite"
+                    ? "🛡 Sécurité"
+                    : `Produits (${products.length})`}
             </button>
           ))}
         </div>
@@ -244,7 +257,7 @@ export default function AdminPage() {
               </p>
             </div>
           </div>
-        ) : (
+        ) : tab === "products" ? (
           <div className="mt-6">
             {backendEnabled && (
               <p className="mb-4 rounded-3xl border border-gold/40 bg-gold/10 p-5 text-sm text-cream/80">
@@ -311,6 +324,8 @@ export default function AdminPage() {
               ))}
             </div>
           </div>
+        ) : (
+          <AdminSecurity />
         )}
       </div>
     </div>
