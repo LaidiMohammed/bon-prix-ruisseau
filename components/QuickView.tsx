@@ -20,6 +20,7 @@ export default function QuickView({
   const [added, setAdded] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [flock, setFlock] = useState<FlockMode>("none");
+  const [showFlock, setShowFlock] = useState(false);
   const [flockPlayer, setFlockPlayer] = useState("");
   const [flockName, setFlockName] = useState("");
   const [flockNumber, setFlockNumber] = useState("");
@@ -35,6 +36,7 @@ export default function QuickView({
     setAdded(false);
     setLeaving(false);
     setFlock("none");
+    setShowFlock(false);
     setFlockPlayer("");
     setFlockName("");
     setFlockNumber("");
@@ -66,7 +68,7 @@ export default function QuickView({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-[70] grid place-items-center bg-ink/80 p-4 backdrop-blur-sm"
+          className="fixed inset-0 z-[70] grid place-items-center bg-ink/80 p-3 backdrop-blur-sm sm:p-4"
           onClick={onClose}
         >
           <motion.div
@@ -75,9 +77,10 @@ export default function QuickView({
             exit={{ y: 40, scale: 0.97, opacity: 0 }}
             transition={{ type: "spring", damping: 26, stiffness: 260 }}
             onClick={(e) => e.stopPropagation()}
-            className="arch-sm grid max-h-[90svh] w-full max-w-3xl overflow-y-auto border border-white/15 bg-coal no-scrollbar md:grid-cols-2"
+            className="arch-sm flex max-h-[94svh] w-full max-w-3xl flex-col overflow-hidden border border-white/15 bg-coal md:grid md:grid-cols-2"
           >
-            <div className="relative h-52 sm:h-auto sm:min-h-72">
+            {/* photo compacte : tient sur un écran téléphone */}
+            <div className="relative h-40 shrink-0 sm:h-52 md:h-auto md:min-h-full">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={product.image}
@@ -87,194 +90,216 @@ export default function QuickView({
               />
               <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent md:bg-gradient-to-r" />
             </div>
-            <div className="relative p-6 sm:p-8">
-              <button
-                onClick={onClose}
-                className="absolute top-4 right-4 grid h-9 w-9 place-items-center rounded-full bg-white/10 hover:bg-signal"
-                aria-label="Fermer"
-              >
-                <X size={18} />
-              </button>
-              <p className="text-[11px] font-black tracking-[0.25em] text-signal uppercase">
-                {product.category} • <span className="font-arabic">{product.nameAr}</span>
-              </p>
-              <h3 className="mt-2 font-display text-3xl tracking-wide">
-                {product.name}
-              </h3>
-              <p className="mt-1 flex items-center gap-1 text-sm text-gold">
-                <Star size={14} fill="currentColor" /> {product.rating} — avis clients vérifiés
-              </p>
-              {product.description ? (
-                <p className="mt-3 rounded-2xl bg-white/5 p-3.5 text-sm leading-relaxed text-cream/80">
-                  {product.description}
-                  {product.descriptionAr ? (
-                    <span className="font-arabic mt-1 block text-cream/60">{product.descriptionAr}</span>
-                  ) : null}
-                </p>
-              ) : null}
-              <div className="mt-3 flex flex-wrap items-center gap-3">
-                <span className="text-3xl font-black">{fmtDA(product.price)}</span>
-                {product.oldPrice && (
-                  <span className="text-cream/40 line-through">
-                    {fmtDA(product.oldPrice)}
-                  </span>
-                )}
-                <span
-                  className={`rounded-full px-3 py-1 text-[11px] font-black tracking-widest uppercase ${
-                    inStock
-                      ? lowStock
-                        ? "bg-gold/15 text-gold"
-                        : "bg-[#25D366]/15 text-[#25D366]"
-                      : "bg-signal/15 text-red-300"
-                  }`}
-                >
-                  {inStock ? (lowStock ? "● Stock limité" : "● En stock • متوفر") : "Rupture • خلص"}
-                </span>
-              </div>
-              <p className="mt-4 text-sm font-bold tracking-widest text-cream/60 uppercase">
-                Flocage — الطباعة <span className="text-gold normal-case">+{fmtDA(FLOCAGE_PRICES.player)} / +{fmtDA(FLOCAGE_PRICES.custom)}</span>
-              </p>
-              <div className="mt-2 grid grid-cols-3 gap-2">
-                {(
-                  [
-                    { v: "none", l: "Sans" },
-                    { v: "player", l: "Joueur ⭐" },
-                    { v: "custom", l: "Mon nom ✍" },
-                  ] as { v: FlockMode; l: string }[]
-                ).map((o) => (
+
+            {/* colonne droite : contenu + boutons toujours visibles */}
+            <div className="flex min-h-0 flex-1 flex-col">
+              <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto p-5 sm:p-8">
+                <div className="relative">
                   <button
-                    key={o.v}
-                    onClick={() => setFlock(o.v)}
-                    className={`rounded-2xl px-2 py-2.5 text-xs font-black transition ${
-                      flock === o.v ? "bg-gold text-ink" : "bg-white/10 hover:bg-white/20"
+                    onClick={onClose}
+                    className="absolute top-0 right-0 grid h-9 w-9 place-items-center rounded-full bg-white/10 hover:bg-signal"
+                    aria-label="Fermer"
+                  >
+                    <X size={18} />
+                  </button>
+                  <p className="pr-10 text-[11px] font-black tracking-[0.25em] text-signal uppercase">
+                    {product.category} • <span className="font-arabic">{product.nameAr}</span>
+                  </p>
+                  <h3 className="mt-1.5 pr-10 font-display text-2xl tracking-wide sm:text-3xl">
+                    {product.name}
+                  </h3>
+                </div>
+                <p className="mt-1 flex items-center gap-1 text-sm text-gold">
+                  <Star size={14} fill="currentColor" /> {product.rating} — avis clients vérifiés
+                </p>
+                {product.description ? (
+                  <p className="mt-2.5 line-clamp-2 rounded-2xl bg-white/5 p-3 text-sm leading-relaxed text-cream/80 sm:line-clamp-none sm:p-3.5">
+                    {product.description}
+                    {product.descriptionAr ? (
+                      <span className="font-arabic mt-1 block text-cream/60">{product.descriptionAr}</span>
+                    ) : null}
+                  </p>
+                ) : null}
+                <div className="mt-2.5 flex flex-wrap items-center gap-3">
+                  <span className="text-2xl font-black sm:text-3xl">{fmtDA(product.price)}</span>
+                  {product.oldPrice && (
+                    <span className="text-cream/40 line-through">
+                      {fmtDA(product.oldPrice)}
+                    </span>
+                  )}
+                  <span
+                    className={`rounded-full px-3 py-1 text-[11px] font-black tracking-widest uppercase ${
+                      inStock
+                        ? lowStock
+                          ? "bg-gold/15 text-gold"
+                          : "bg-[#25D366]/15 text-[#25D366]"
+                        : "bg-signal/15 text-red-300"
                     }`}
                   >
-                    {o.l}
-                  </button>
-                ))}
-              </div>
-              {flock === "player" && (
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {[...(product.players ?? []), ...STAR_FLOCK.filter((s) => !(product.players ?? []).includes(s))].map((pl) => (
+                    {inStock ? (lowStock ? "● Stock limité" : "● En stock • متوفر") : "Rupture • خلص"}
+                  </span>
+                </div>
+
+                {/* flocage repliable : le modal tient sans scroll */}
+                <button
+                  onClick={() => setShowFlock((v) => !v)}
+                  className="mt-3 flex w-full items-center justify-between rounded-2xl bg-white/5 px-4 py-2.5 text-sm font-bold tracking-widest uppercase"
+                >
+                  <span className="text-cream/70">
+                    Flocage — الطباعة{" "}
+                    <span className="text-gold normal-case">
+                      +{fmtDA(FLOCAGE_PRICES.player)} / +{fmtDA(FLOCAGE_PRICES.custom)}
+                    </span>
+                  </span>
+                  <span className="grid h-6 w-6 place-items-center rounded-full bg-white/10 text-base leading-none">
+                    {showFlock ? "−" : "+"}
+                  </span>
+                </button>
+                {showFlock && (
+                  <>
+                    <div className="mt-2 grid grid-cols-3 gap-2">
+                      {(
+                        [
+                          { v: "none", l: "Sans" },
+                          { v: "player", l: "Joueur ⭐" },
+                          { v: "custom", l: "Mon nom ✍" },
+                        ] as { v: FlockMode; l: string }[]
+                      ).map((o) => (
+                        <button
+                          key={o.v}
+                          onClick={() => setFlock(o.v)}
+                          className={`rounded-2xl px-2 py-2.5 text-xs font-black transition ${
+                            flock === o.v ? "bg-gold text-ink" : "bg-white/10 hover:bg-white/20"
+                          }`}
+                        >
+                          {o.l}
+                        </button>
+                      ))}
+                    </div>
+                    {flock === "player" && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {[...(product.players ?? []), ...STAR_FLOCK.filter((s) => !(product.players ?? []).includes(s))].map((pl) => (
+                          <button
+                            key={pl}
+                            onClick={() => setFlockPlayer(pl)}
+                            className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
+                              flockPlayer === pl ? "bg-signal text-white" : "bg-white/10 hover:bg-white/20"
+                            }`}
+                          >
+                            {pl}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                    {flock === "custom" && (
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        <input
+                          value={flockName}
+                          onChange={(e) => setFlockName(e.target.value.slice(0, 14))}
+                          placeholder="Ton nom — اسمك"
+                          className="rounded-2xl border border-white/12 bg-ink px-4 py-2.5 text-sm outline-none focus:border-gold"
+                        />
+                        <input
+                          value={flockNumber}
+                          onChange={(e) => setFlockNumber(e.target.value.replace(/\D/g, "").slice(0, 2))}
+                          placeholder="N° — 7"
+                          inputMode="numeric"
+                          className="rounded-2xl border border-white/12 bg-ink px-4 py-2.5 text-sm outline-none focus:border-gold"
+                        />
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <p className="mt-3 text-sm font-bold tracking-widest text-cream/60 uppercase">
+                  Taille — اختر المقاس
+                </p>
+                <div className="mt-2 flex flex-wrap gap-2 pb-1">
+                  {product.sizes.map((s) => (
                     <button
-                      key={pl}
-                      onClick={() => setFlockPlayer(pl)}
-                      className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
-                        flockPlayer === pl ? "bg-signal text-white" : "bg-white/10 hover:bg-white/20"
+                      key={s}
+                      onClick={() => setSize(s)}
+                      className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+                        size === s
+                          ? "bg-signal text-white"
+                          : "bg-white/10 hover:bg-white/20"
                       }`}
                     >
-                      {pl}
+                      {s}
                     </button>
                   ))}
                 </div>
-              )}
-              {flock === "custom" && (
-                <div className="mt-2 grid grid-cols-2 gap-2">
-                  <input
-                    value={flockName}
-                    onChange={(e) => setFlockName(e.target.value.slice(0, 14))}
-                    placeholder="Ton nom — اسمك"
-                    className="rounded-2xl border border-white/12 bg-ink px-4 py-2.5 text-sm outline-none focus:border-gold"
-                  />
-                  <input
-                    value={flockNumber}
-                    onChange={(e) => setFlockNumber(e.target.value.replace(/\D/g, "").slice(0, 2))}
-                    placeholder="N° — 7"
-                    inputMode="numeric"
-                    className="rounded-2xl border border-white/12 bg-ink px-4 py-2.5 text-sm outline-none focus:border-gold"
-                  />
-                </div>
-              )}
-              <p className="mt-4 text-sm font-bold tracking-widest text-cream/60 uppercase">
-                Taille — اختر المقاس
-              </p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {product.sizes.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => setSize(s)}
-                    className={`rounded-full px-4 py-2 text-sm font-bold transition ${
-                      size === s
-                        ? "bg-signal text-white"
-                        : "bg-white/10 hover:bg-white/20"
-                    }`}
-                  >
-                    {s}
-                  </button>
-                ))}
               </div>
-              {/* CTA toujours visibles sur téléphone : collés en bas, pas de scroll */}
-              <div className="sticky bottom-0 -mx-6 mt-4 bg-coal/95 px-6 pt-3 pb-4 backdrop-blur sm:-mx-8 sm:px-8">
-              <button
-                onClick={() => {
-                  // Ignore double-taps: one click = one item in the cart.
-                  if (!product || !canAdd || added) return;
-                  add({
-                    productId: product.id,
-                    name: product.name,
-                    size: size as string,
-                    price: product.price,
-                    image: product.image,
-                    flocageLabel: flockInfo.label,
-                    flocagePrice: flockInfo.price || undefined,
-                  });
-                  setAdded(true);
-                  setTimeout(onClose, 600);
-                }}
-                disabled={!canAdd || added}
-                className={`flex w-full items-center justify-center gap-2 rounded-full py-3.5 font-black transition ${
-                  canAdd
-                    ? "bg-signal text-white shadow-xl shadow-signal/30 hover:scale-[1.02]"
-                    : "cursor-not-allowed bg-white/10 text-cream/40"
-                }`}
-              >
-                <ShoppingBag size={19} />
-                {!inStock
-                  ? "Rupture de stock"
-                  : added
-                    ? "Ajouté ✓ — أضيف"
+
+              {/* boutons FIXES : jamais de scroll pour commander */}
+              <div className="shrink-0 border-t border-white/10 bg-coal px-5 pt-3 pb-4 sm:px-8 sm:pb-5">
+                <button
+                  onClick={() => {
+                    // Ignore double-taps: one click = one item in the cart.
+                    if (!product || !canAdd || added) return;
+                    add({
+                      productId: product.id,
+                      name: product.name,
+                      size: size as string,
+                      price: product.price,
+                      image: product.image,
+                      flocageLabel: flockInfo.label,
+                      flocagePrice: flockInfo.price || undefined,
+                    });
+                    setAdded(true);
+                    setTimeout(onClose, 600);
+                  }}
+                  disabled={!canAdd || added}
+                  className={`flex w-full items-center justify-center gap-2 rounded-full py-3.5 font-black transition ${
+                    canAdd
+                      ? "bg-signal text-white shadow-xl shadow-signal/30 hover:scale-[1.02]"
+                      : "cursor-not-allowed bg-white/10 text-cream/40"
+                  }`}
+                >
+                  <ShoppingBag size={19} />
+                  {!inStock
+                    ? "Rupture de stock"
+                    : added
+                      ? "Ajouté ✓ — أضيف"
+                      : !size
+                        ? "Choisis ta taille d'abord"
+                        : flock !== "none" && !flockInfo.ok
+                          ? "Choisis ton flocage"
+                          : `Ajouter au panier${flockInfo.price ? ` + ${fmtDA(flockInfo.price)}` : ""}`}
+                </button>
+                <button
+                  onClick={() => {
+                    // Ignore double-taps while navigating to checkout.
+                    if (!product || !canAdd || leaving) return;
+                    setLeaving(true);
+                    add({
+                      productId: product.id,
+                      name: product.name,
+                      size: size as string,
+                      price: product.price,
+                      image: product.image,
+                      flocageLabel: flockInfo.label,
+                      flocagePrice: flockInfo.price || undefined,
+                    });
+                    setCartOpen(false);
+                    onClose();
+                    router.push("/commande");
+                  }}
+                  disabled={!canAdd || leaving}
+                  className={`mt-2.5 flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-black tracking-widest uppercase transition ${
+                    canAdd
+                      ? "bg-cream text-ink hover:bg-signal hover:text-white"
+                      : "cursor-not-allowed bg-white/10 text-cream/40"
+                  }`}
+                >
+                  <ArrowRight size={17} />
+                  {!inStock
+                    ? "Rupture — bientôt de retour"
                     : !size
-                      ? "Choisis ta taille d'abord"
-                      : flock !== "none" && !flockInfo.ok
-                        ? "Choisis ton flocage"
-                        : `Ajouter au panier${flockInfo.price ? ` + ${fmtDA(flockInfo.price)}` : ""}`}
-              </button>
-              <button
-                onClick={() => {
-                  // Ignore double-taps while navigating to checkout.
-                  if (!product || !canAdd || leaving) return;
-                  setLeaving(true);
-                  add({
-                    productId: product.id,
-                    name: product.name,
-                    size: size as string,
-                    price: product.price,
-                    image: product.image,
-                    flocageLabel: flockInfo.label,
-                    flocagePrice: flockInfo.price || undefined,
-                  });
-                  setCartOpen(false);
-                  onClose();
-                  router.push("/commande");
-                }}
-                disabled={!canAdd || leaving}
-                className={`mt-2.5 flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-black tracking-widest uppercase transition ${
-                  canAdd
-                    ? "bg-cream text-ink hover:bg-signal hover:text-white"
-                    : "cursor-not-allowed bg-white/10 text-cream/40"
-                }`}
-              >
-                <ArrowRight size={17} />
-                {!inStock
-                  ? "Rupture — bientôt de retour"
-                  : !size
-                    ? "Choisis ta taille pour commander"
-                    : "Commander maintenant ✓"}
-              </button>
+                      ? "Choisis ta taille pour commander"
+                      : "Commander maintenant ✓"}
+                </button>
               </div>
-              <p className="mt-3 text-center text-xs text-cream/50">
-                Paiement à la livraison • Échange sous 7 jours au magasin Ruisseau
-              </p>
             </div>
           </motion.div>
         </motion.div>

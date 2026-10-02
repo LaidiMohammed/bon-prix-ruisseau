@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Anton, Cairo, Inter } from "next/font/google";
+import PwaRegister from "@/components/PwaRegister";
 import SiteShell from "@/components/SiteShell";
 import "./globals.css";
 
@@ -11,6 +12,12 @@ export const metadata: Metadata = {
   title: "Bon Prix Ruisseau Sports — Boutique Alger",
   description:
     "Maillots 2027, survêtements premium, sneakers au Ruisseau, Alger. Qualité haute, prix imbattables. بون بري روسو سبور.",
+  applicationName: "BPR Sports",
+  appleWebApp: {
+    capable: true,
+    title: "BPR Sports",
+    statusBarStyle: "black-translucent",
+  },
   icons: { icon: "/logo.jpg", apple: "/logo.jpg" },
   openGraph: {
     title: "Bon Prix Ruisseau Sports",
@@ -24,6 +31,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="fr" className={`${anton.variable} ${inter.variable} ${cairo.variable} h-full`}>
       <body className="min-h-full bg-ink font-body text-cream antialiased">
+        <PwaRegister />
         <SiteShell>{children}</SiteShell>
       </body>
     </html>

@@ -1,6 +1,7 @@
 import { MapPin, Phone } from "lucide-react";
 import Link from "next/link";
 import type { SiteSettings } from "@/lib/store";
+import InstallAppButton from "./InstallAppButton";
 import { FacebookIcon, InstagramIcon, TikTokIcon } from "./SocialIcons";
 
 export default function Footer({ settings }: { settings: SiteSettings }) {
@@ -81,6 +82,7 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
           >
             Une question ? Écris-nous sur WhatsApp
           </a>
+          <InstallAppButton />
           <p className="font-arabic mt-3 text-sm text-cream/60">{settings.shop.hoursAr}</p>
         </div>
       </div>
