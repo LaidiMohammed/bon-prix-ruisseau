@@ -16,7 +16,15 @@ export type CartItem = {
 export const unitPrice = (i: Pick<CartItem, "price" | "flocagePrice">) =>
   i.price + (i.flocagePrice ?? 0);
 
-export type OrderStatus = "pending" | "validated" | "cancelled" | "delivered";
+export type OrderStatus =
+  | "pending" // en attente (local + serveur)
+  | "validated" // validée (ancien statut local — mappé vers confirmed)
+  | "confirmed" // confirmée (serveur)
+  | "preparing" // en préparation (serveur)
+  | "shipped" // expédiée (serveur)
+  | "cancelled" // annulée
+  | "delivered" // livrée
+  | "returned"; // retournée (serveur)
 
 export type Order = {
   id: string; // 8 caractères
@@ -70,8 +78,12 @@ export { readLS, writeLS };
 export const STATUS_LABEL: Record<OrderStatus, { fr: string; ar: string }> = {
   pending: { fr: "En attente", ar: "قيد المراجعة" },
   validated: { fr: "Validée ✓", ar: "مقبولة ✓" },
+  confirmed: { fr: "Confirmée ✓", ar: "مؤكدة ✓" },
+  preparing: { fr: "En préparation", ar: "قيد التحضير" },
+  shipped: { fr: "Expédiée", ar: "تم الشحن" },
   cancelled: { fr: "Annulée", ar: "ملغاة" },
   delivered: { fr: "Livrée", ar: "تم التوصيل" },
+  returned: { fr: "Retournée", ar: "مرتجعة" },
 };
 
 export const orderUrl = (id: string) =>

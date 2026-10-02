@@ -9,7 +9,7 @@ import ZoomBg from "@/components/ZoomBg";
 import { useShop } from "@/components/ShopProvider";
 import { DELIVERY_LABEL, deliveryFee, type DeliveryType } from "@/lib/delivery";
 import { fmtDA } from "@/lib/mock-data";
-import { apiPlaceOrder, backendEnabled } from "@/lib/backend";
+import { apiPlaceOrder, ApiError, backendEnabled } from "@/lib/backend";
 import { orderUrl, type Order } from "@/lib/orders";
 import { loadWilayas, pad2, type Wilaya } from "@/lib/wilayas";
 import { useSiteData } from "@/lib/store";
@@ -32,7 +32,7 @@ export default function CommandePage() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<Order | null>(null);
 
-  const { place } = useShop();
+  const { place, importOrder } = useShop();
 
   useEffect(() => {
     loadWilayas().then(setWilayas).catch(() => setWilayas([]));
@@ -60,7 +60,7 @@ export default function CommandePage() {
           <p className="mt-3 text-sm text-cream/60">
             On t&apos;appellera pour confirmer. Garde ton numéro de commande :
           </p>
-          <p className="mx-auto mt-4 w-fit rounded-2xl bg-signal px-8 py-3 font-mono text-3xl font-black tracking-[0.2em]">
+          <p className="mx-auto mt-4 w-fit max-w-full rounded-2xl bg-signal px-6 py-3 font-mono text-xl font-black tracking-[0.15em] break-all sm:text-2xl">
             {done.id}
           </p>
           <div className="mx-auto mt-5 w-fit rounded-3xl bg-white p-4">
@@ -133,10 +133,16 @@ export default function CommandePage() {
       let order: Order;
       if (backendEnabled) {
         try {
-          // Server first: one shared list for all users, totals recomputed server-side.
+          // Serveur d'abord : prix + stock vérifiés, n° BPR- unique.
           order = await apiPlaceOrder(draft);
-        } catch {
-          // Server down/busy: never block the client — keep local mode.
+          importOrder(order); // copie locale pour le suivi offline sur cet appareil
+        } catch (e) {
+          // Erreur métier (rupture, données invalides) => on l'affiche, pas de doublon.
+          if (e instanceof ApiError && (e.status === 400 || e.status === 409 || e.status === 429)) {
+            setSubmitting(false);
+            return setError(e.message);
+          }
+          // Serveur injoignable/en panne : jamais bloquer le client — mode local.
           order = place(draft);
         }
       } else {

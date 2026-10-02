@@ -8,13 +8,17 @@ import { orderUrl, STATUS_LABEL, unitPrice, type Order } from "@/lib/orders";
 import { pad2 } from "@/lib/wilayas";
 
 export function statusColor(s: Order["status"]) {
-  return s === "validated"
+  return s === "validated" || s === "confirmed"
     ? "bg-[#25D366]/15 text-[#25D366]"
     : s === "delivered"
       ? "bg-gold/15 text-gold"
-      : s === "cancelled"
+      : s === "cancelled" || s === "returned"
         ? "bg-signal/15 text-red-300"
-        : "bg-white/10 text-cream/70";
+        : s === "preparing"
+          ? "bg-sky-500/15 text-sky-300"
+          : s === "shipped"
+            ? "bg-violet-500/15 text-violet-300"
+            : "bg-white/10 text-cream/70";
 }
 
 export function OrderCard({ order, showQr = true }: { order: Order; showQr?: boolean }) {

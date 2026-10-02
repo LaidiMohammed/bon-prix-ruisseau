@@ -38,6 +38,7 @@ type ShopCtx = {
   place: (
     draft: Omit<Order, "id" | "date" | "status" | "subtotal" | "fee" | "total">
   ) => Order;
+  importOrder: (order: Order) => void; // garde une commande serveur sur cet appareil (suivi offline)
   setStatus: (id: string, status: OrderStatus) => void;
   removeOrder: (id: string) => void;
 };
@@ -122,6 +123,15 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     []
   );
 
+  const importOrder = useCallback((order: Order) => {
+    setOrders((prev) => {
+      if (prev.some((o) => o.id === order.id)) return prev;
+      const next = [order, ...prev];
+      writeLS(ORDERS_KEY, next);
+      return next;
+    });
+  }, []);
+
   const setStatus = useCallback((id: string, status: OrderStatus) => {
     setOrders((prev) => {
       const next = prev.map((o) => (o.id === id ? { ...o, status } : o));
@@ -150,10 +160,11 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       setCartOpen,
       orders,
       place,
+      importOrder,
       setStatus,
       removeOrder,
     }),
-    [items, add, setQty, clearCart, cartOpen, orders, place, setStatus, removeOrder]
+    [items, add, setQty, clearCart, cartOpen, orders, place, importOrder, setStatus, removeOrder]
   );
 
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>

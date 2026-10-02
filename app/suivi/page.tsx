@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import Link from "next/link";
+import { useState } from "react";
+import { ArrowRight, Search } from "lucide-react";
 import { OrderCard } from "@/components/OrderCard";
 import SectionHeading from "@/components/SectionHeading";
 import ZoomBg from "@/components/ZoomBg";
 import { useShop } from "@/components/ShopProvider";
-import { apiGetOrder, backendEnabled } from "@/lib/backend";
-import type { Order } from "@/lib/orders";
+import { backendEnabled } from "@/lib/backend";
 import { useSiteData } from "@/lib/store";
 
 export default function SuiviPage() {
@@ -15,32 +15,13 @@ export default function SuiviPage() {
   const { orders } = useShop();
   const [q, setQ] = useState("");
   const [searched, setSearched] = useState(false);
-  const [remote, setRemote] = useState<Order[]>([]);
 
   const clean = q.trim().toUpperCase().replace(/[\s-]/g, "");
+  // N° serveur BPR- : suivi en ligne (vérifié par téléphone sur la page suivante).
+  const isBpr =
+    backendEnabled && searched && /^BPR-?[0-9-]+$/i.test(q.trim());
 
-  const doSearch = () => {
-    setRemote([]); // event handler: sync reset is fine here
-    setSearched(true);
-  };
-
-  // Exact order number: also check the shared server (other phone / PC).
-  useEffect(() => {
-    if (!backendEnabled || !searched || !/^[A-Z2-9]{8}$/.test(clean)) return;
-    let alive = true;
-    apiGetOrder(clean)
-      .then((o) => {
-        if (alive) setRemote(o ? [o] : []);
-      })
-      .catch(() => {
-        if (alive) setRemote([]);
-      });
-    return () => {
-      alive = false;
-    };
-  }, [searched, clean]);
-
-  const localResults = searched
+  const results = searched
     ? orders.filter(
         (o) =>
           o.id.toUpperCase() === clean ||
@@ -48,10 +29,6 @@ export default function SuiviPage() {
           o.name.toUpperCase().includes(clean)
       )
     : [];
-  const results = [
-    ...remote.filter((r) => !localResults.some((o) => o.id === r.id)),
-    ...localResults,
-  ];
 
   return (
     <div className="pt-32 pb-10">
@@ -66,12 +43,12 @@ export default function SuiviPage() {
               setQ(e.target.value);
               setSearched(false);
             }}
-            onKeyDown={(e) => e.key === "Enter" && doSearch()}
-            placeholder="N° commande (8 lettres), téléphone ou nom…"
+            onKeyDown={(e) => e.key === "Enter" && setSearched(true)}
+            placeholder="N° commande (BPR-… ou 8 lettres), téléphone ou nom…"
             className="w-full bg-transparent text-sm outline-none placeholder:text-cream/40"
           />
           <button
-            onClick={doSearch}
+            onClick={() => setSearched(true)}
             className="shrink-0 rounded-full bg-signal px-5 py-2 text-xs font-black uppercase"
           >
             Voir
@@ -79,11 +56,25 @@ export default function SuiviPage() {
         </div>
 
         <div className="mt-6 space-y-4">
-          {searched && results.length === 0 && (
+          {isBpr && (
+            <Link
+              href={`/suivi/${encodeURIComponent(q.trim().toUpperCase())}`}
+              className="flex items-center justify-between gap-3 rounded-3xl border border-[#25D366]/40 bg-[#25D366]/10 p-5 text-sm font-bold"
+            >
+              <span>
+                Suivi en ligne : <span className="font-mono">{q.trim().toUpperCase()}</span>
+                <span className="font-arabic block text-xs font-normal text-cream/60">
+                  تتبع طلبك أونلاين
+                </span>
+              </span>
+              <ArrowRight size={18} className="shrink-0 text-[#25D366]" />
+            </Link>
+          )}
+          {searched && results.length === 0 && !isBpr && (
             <p className="rounded-3xl border border-white/12 bg-coal p-6 text-center text-sm text-cream/60">
-              Aucune commande trouvée (ni sur cet appareil{backendEnabled ? ", ni en ligne" : ""}).
+              Aucune commande trouvée sur cet appareil.
               <span className="font-arabic block">لم يتم العثور على طلب</span>
-              <span className="mt-1 block text-xs">Astuce: tape le N° à 8 caractères du ticket de commande.</span>
+              <span className="mt-1 block text-xs">Astuce: pour un N° BPR-, utilise le suivi en ligne ci-dessus.</span>
             </p>
           )}
           {results.map((o) => (

@@ -2,80 +2,166 @@
 
 import QRCode from "react-qr-code";
 import { useCallback, useEffect, useState } from "react";
-import { Check, RefreshCw, Search, Trash2, Truck, X } from "lucide-react";
+import { Check, Package, RefreshCw, Search, Trash2, Truck, X } from "lucide-react";
 import { statusColor } from "./OrderCard";
 import { useShop } from "./ShopProvider";
-import { DELIVERY_LABEL } from "@/lib/delivery";
+import { DELIVERY_LABEL, type DeliveryType } from "@/lib/delivery";
 import { fmtDA } from "@/lib/mock-data";
-import {
-  apiListOrders,
-  apiSetStatus,
-  backendEnabled,
-} from "@/lib/backend";
+import { backendEnabled, supabase } from "@/lib/backend";
 import { orderUrl, STATUS_LABEL, type Order, type OrderStatus } from "@/lib/orders";
 import { pad2 } from "@/lib/wilayas";
+
+type AdminOrder = Order & { _uuid: string }; // _uuid = PK Supabase (actions admin)
+
+type DbItem = {
+  product_id: string | null;
+  variant_id: string | null;
+  product_name_fr: string;
+  variant_label: string;
+  image_url: string;
+  flocage_label: string | null;
+  flocage_price: number;
+  unit_price: number;
+  qty: number;
+};
+
+type DbRow = {
+  id: string;
+  order_number: string;
+  created_at: string;
+  guest_name: string;
+  guest_phone: string;
+  wilaya_code: number;
+  wilaya_name: string;
+  commune: string;
+  address: string | null;
+  delivery: string;
+  notes: string | null;
+  subtotal: number;
+  delivery_fee: number;
+  total: number;
+  status: string;
+  order_items: DbItem[];
+};
+
+function mapRow(r: DbRow): AdminOrder {
+  const delivery: DeliveryType = r.delivery === "stopdesk" ? "bureau" : "home";
+  return {
+    _uuid: r.id,
+    id: r.order_number,
+    date: r.created_at,
+    name: r.guest_name || "—",
+    phone: r.guest_phone || "—",
+    wilaya: r.wilaya_name || "",
+    wilayaCode: r.wilaya_code,
+    commune: r.commune || "",
+    address: r.address ?? "",
+    delivery,
+    notes: r.notes ?? "",
+    items: (r.order_items ?? []).map((i) => ({
+      productId: i.product_id ?? i.variant_id ?? i.product_name_fr,
+      name: i.product_name_fr,
+      size: i.variant_label,
+      price: Math.max(0, i.unit_price - (i.flocage_price ?? 0)),
+      image: i.image_url || "/logo.jpg",
+      qty: i.qty,
+      flocageLabel: i.flocage_label ?? undefined,
+      flocagePrice: i.flocage_price || undefined,
+    })),
+    subtotal: r.subtotal,
+    fee: r.delivery_fee,
+    total: r.total,
+    status: r.status as OrderStatus,
+  };
+}
+
+const FILTERS = ["all", "pending", "confirmed", "preparing", "shipped", "delivered", "cancelled"] as const;
 
 export default function OrdersAdmin() {
   const { orders, setStatus, removeOrder } = useShop();
   const [q, setQ] = useState("");
-  const [filter, setFilter] = useState<"all" | OrderStatus>("all");
+  const [filter, setFilter] = useState<(typeof FILTERS)[number]>("all");
   const [openQr, setOpenQr] = useState<string | null>(null);
-  // Shared server list (all users) — null = backend off / not loaded yet.
-  const [remote, setRemote] = useState<Order[] | null>(null);
+  // Liste serveur (tous les clients) — null = backend coupé / pas encore chargée.
+  const [remote, setRemote] = useState<AdminOrder[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [opError, setOpError] = useState("");
   const loading = refreshing || (backendEnabled && remote === null);
 
   const fetchRemote = useCallback(async () => {
-    try {
-      setRemote(await apiListOrders());
-    } catch {
-      /* server busy — keep previous list, never block the admin */
-    }
+    const client = supabase();
+    if (!client) return;
+    const { data, error } = await client
+      .from("orders")
+      .select("*, order_items(*)")
+      .order("created_at", { ascending: false })
+      .limit(200);
+    if (error) throw new Error("Lecture impossible — es-tu connecté en admin ?");
+    return (data as unknown as DbRow[]).map(mapRow);
   }, []);
 
-  // Initial load: state updates only inside async callbacks (no cascading render).
+  // Chargement initial : setState uniquement dans les callbacks async.
   useEffect(() => {
     if (!backendEnabled) return;
     let alive = true;
-    apiListOrders()
+    fetchRemote()
       .then((list) => {
-        if (alive) setRemote(list);
+        if (alive && list) setRemote(list);
       })
       .catch(() => {
-        /* retry via the refresh button */
+        /* bouton Actualiser pour réessayer */
       });
     return () => {
       alive = false;
     };
-  }, []);
+  }, [fetchRemote]);
 
   const load = useCallback(async () => {
-    setRefreshing(true); // event-handler path: sync set is fine
+    setRefreshing(true); // event handler : set synchrone OK
+    setOpError("");
     try {
-      await fetchRemote();
+      const list = await fetchRemote();
+      if (list) setRemote(list);
+    } catch (e) {
+      setOpError(e instanceof Error ? e.message : "Chargement impossible");
     } finally {
       setRefreshing(false);
     }
   }, [fetchRemote]);
 
-  const source = backendEnabled && remote ? remote : orders;
+  const source: Order[] = backendEnabled && remote ? remote : orders;
 
-  const handleStatus = async (id: string, st: OrderStatus) => {
+  const handleStatus = async (o: Order, st: OrderStatus) => {
     if (backendEnabled && remote) {
-      try {
-        await apiSetStatus(id, st);
-      } catch {
-        /* offline — still update the local view below */
+      const client = supabase();
+      const uuid = (o as AdminOrder)._uuid;
+      if (!client || !uuid) return;
+      setOpError("");
+      const { error } = await client.from("orders").update({ status: st }).eq("id", uuid);
+      if (error) {
+        setOpError("Écriture refusée — reconnecte-toi en admin");
+        return;
       }
-      setRemote(remote.map((o) => (o.id === id ? { ...o, status: st } : o)));
+      setRemote(remote.map((x) => (x.id === o.id ? { ...x, status: st } : x)));
+      return;
     }
-    setStatus(id, st);
+    setStatus(o.id, st);
   };
 
-  const handleDelete = (id: string) => {
-    if (backendEnabled && remote)
-      setRemote(remote.filter((o) => o.id !== id));
-    removeOrder(id);
+  const handleDelete = async (o: Order) => {
+    if (backendEnabled && remote) {
+      const client = supabase();
+      const uuid = (o as AdminOrder)._uuid;
+      if (!client || !uuid) return;
+      const { error } = await client.from("orders").delete().eq("id", uuid);
+      if (error) {
+        setOpError("Suppression refusée — reconnecte-toi en admin");
+        return;
+      }
+      setRemote(remote.filter((x) => x.id !== o.id));
+      return;
+    }
+    removeOrder(o.id);
   };
 
   const clean = q.trim().toUpperCase();
@@ -89,7 +175,7 @@ export default function OrdersAdmin() {
   );
 
   const revenue = source
-    .filter((o) => o.status === "validated" || o.status === "delivered")
+    .filter((o) => o.status === "validated" || o.status === "confirmed" || o.status === "preparing" || o.status === "shipped" || o.status === "delivered")
     .reduce((n, o) => n + o.total, 0);
 
   return (
@@ -117,6 +203,11 @@ export default function OrdersAdmin() {
           {loading ? "Chargement…" : remote ? `Actualiser — ${remote.length} en ligne ✓` : "Charger les commandes en ligne"}
         </button>
       )}
+      {opError && (
+        <p className="mt-3 rounded-2xl bg-signal/15 px-4 py-2.5 text-center text-sm font-bold text-red-300">
+          {opError}
+        </p>
+      )}
 
       <div className="mt-4 flex flex-col gap-2 sm:flex-row">
         <div className="flex flex-1 items-center gap-2 rounded-full border border-white/12 bg-coal px-4 py-2.5">
@@ -124,16 +215,16 @@ export default function OrdersAdmin() {
           <input
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            placeholder="Nom, téléphone ou N° (8 caractères)…"
+            placeholder="Nom, téléphone ou N° (BPR-…)…"
             className="w-full bg-transparent text-sm outline-none placeholder:text-cream/40"
           />
         </div>
-        <div className="flex gap-1.5">
-          {(["all", "pending", "validated", "delivered", "cancelled"] as const).map((f) => (
+        <div className="no-scrollbar flex gap-1.5 overflow-x-auto pb-1">
+          {FILTERS.map((f) => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              className={`rounded-full px-3.5 py-2 text-xs font-bold ${filter === f ? "bg-cream text-ink" : "bg-white/10"}`}
+              className={`shrink-0 rounded-full px-3.5 py-2 text-xs font-bold ${filter === f ? "bg-cream text-ink" : "bg-white/10"}`}
             >
               {f === "all" ? "Tout" : STATUS_LABEL[f].fr}
             </button>
@@ -154,8 +245,8 @@ export default function OrdersAdmin() {
           <div key={o.id} className="rounded-3xl border border-white/12 bg-coal p-5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <span className="font-mono text-xl font-black tracking-[0.15em]">{o.id}</span>
-                <span className={`ml-2 rounded-full px-3 py-1 text-[11px] font-black ${statusColor(o.status)}`}>
+                <span className="font-mono text-lg font-black tracking-[0.1em] break-all sm:text-xl">{o.id}</span>
+                <span className={`ml-2 rounded-full px-3 py-1 text-[11px] font-black whitespace-nowrap ${statusColor(o.status)}`}>
                   {STATUS_LABEL[o.status].fr}
                 </span>
               </div>
@@ -172,29 +263,39 @@ export default function OrdersAdmin() {
             <p className="mt-1 text-sm font-black">Total: <span className="text-gold">{fmtDA(o.total)}</span> <span className="font-normal text-cream/50">(articles {fmtDA(o.subtotal)} + livraison {fmtDA(o.fee)})</span></p>
             <div className="mt-3 flex flex-wrap gap-2">
               {o.status === "pending" && (
-                <button onClick={() => handleStatus(o.id, "validated")} className="flex items-center gap-1.5 rounded-full bg-[#25D366] px-4 py-2 text-xs font-black text-ink">
-                  <Check size={14} /> Valider
+                <button onClick={() => handleStatus(o, "confirmed")} className="flex items-center gap-1.5 rounded-full bg-[#25D366] px-4 py-2 text-xs font-black text-ink">
+                  <Check size={14} /> Confirmer
                 </button>
               )}
-              {(o.status === "validated" || o.status === "pending") && (
-                <button onClick={() => handleStatus(o.id, "delivered")} className="flex items-center gap-1.5 rounded-full bg-gold px-4 py-2 text-xs font-black text-ink">
+              {o.status === "confirmed" && (
+                <button onClick={() => handleStatus(o, "preparing")} className="flex items-center gap-1.5 rounded-full bg-sky-500 px-4 py-2 text-xs font-black text-ink">
+                  <Package size={14} /> Préparer
+                </button>
+              )}
+              {o.status === "preparing" && (
+                <button onClick={() => handleStatus(o, "shipped")} className="flex items-center gap-1.5 rounded-full bg-violet-500 px-4 py-2 text-xs font-black text-white">
+                  <Truck size={14} /> Expédier
+                </button>
+              )}
+              {(o.status === "shipped" || o.status === "validated") && (
+                <button onClick={() => handleStatus(o, "delivered")} className="flex items-center gap-1.5 rounded-full bg-gold px-4 py-2 text-xs font-black text-ink">
                   <Truck size={14} /> Livrée
                 </button>
               )}
-              {o.status !== "cancelled" && (
-                <button onClick={() => handleStatus(o.id, "cancelled")} className="flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-2 text-xs font-bold hover:bg-signal">
+              {o.status !== "cancelled" && o.status !== "delivered" && (
+                <button onClick={() => handleStatus(o, "cancelled")} className="flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-2 text-xs font-bold hover:bg-signal">
                   <X size={14} /> Refuser
                 </button>
               )}
               {o.status === "cancelled" && (
-                <button onClick={() => handleStatus(o.id, "pending")} className="rounded-full bg-white/10 px-4 py-2 text-xs font-bold">
+                <button onClick={() => handleStatus(o, "pending")} className="rounded-full bg-white/10 px-4 py-2 text-xs font-bold">
                   Remettre en attente
                 </button>
               )}
               <button onClick={() => setOpenQr(openQr === o.id ? null : o.id)} className="rounded-full border border-white/20 px-4 py-2 text-xs font-bold hover:bg-white/10">
                 QR client
               </button>
-              <button onClick={() => handleDelete(o.id)} className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-signal hover:bg-signal hover:text-white" aria-label="Supprimer">
+              <button onClick={() => handleDelete(o)} className="grid h-8 w-8 place-items-center rounded-full bg-white/10 text-signal hover:bg-signal hover:text-white" aria-label="Supprimer">
                 <Trash2 size={14} />
               </button>
             </div>
@@ -203,7 +304,7 @@ export default function OrdersAdmin() {
                 <div className="rounded-xl bg-white p-2">
                   <QRCode value={orderUrl(o.id)} size={72} />
                 </div>
-                <p className="text-xs text-cream/60">Le client scanne pour suivre sa commande.<br /><span className="font-mono">{orderUrl(o.id)}</span></p>
+                <p className="text-xs text-cream/60">Le client scanne pour suivre sa commande.<br /><span className="font-mono break-all">{orderUrl(o.id)}</span></p>
               </div>
             )}
           </div>
@@ -212,7 +313,7 @@ export default function OrdersAdmin() {
       <p className="mt-4 text-xs text-cream/40">
         {backendEnabled
           ? "Serveur partagé actif : toutes les commandes clients arrivent ici. Actualise pendant les rush (matchs, TikTok live)."
-          : "Note: sans backend, les commandes sont stockées dans le navigateur de l'appareil où elles sont passées. Pour centraliser toutes les commandes (téléphone + PC + site), active Supabase — table prête dans supabase/schema.sql."}
+          : "Note: sans backend, les commandes sont stockées dans le navigateur de l'appareil où elles sont passées."}
       </p>
     </div>
   );
