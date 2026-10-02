@@ -8,7 +8,7 @@ import { useShop } from "./ShopProvider";
 import { DELIVERY_LABEL, type DeliveryType } from "@/lib/delivery";
 import { fmtDA } from "@/lib/mock-data";
 import { backendEnabled, supabase } from "@/lib/backend";
-import { orderUrl, STATUS_LABEL, type Order, type OrderStatus } from "@/lib/orders";
+import { orderQrText, orderUrl, STATUS_LABEL, type Order, type OrderStatus } from "@/lib/orders";
 import { pad2 } from "@/lib/wilayas";
 
 type AdminOrder = Order & { _uuid: string }; // _uuid = PK Supabase (actions admin)
@@ -345,9 +345,9 @@ export default function OrdersAdmin() {
             {openQr === o.id && (
               <div className="mt-3 flex items-center gap-3 rounded-2xl bg-ink p-3">
                 <div className="rounded-xl bg-white p-2">
-                  <QRCode value={orderUrl(o.id)} size={72} />
+                  <QRCode value={orderQrText(o)} size={84} />
                 </div>
-                <p className="text-xs text-cream/60">Le client scanne pour suivre sa commande.<br /><span className="font-mono break-all">{orderUrl(o.id)}</span></p>
+                <p className="text-xs text-cream/60">Le client scanne : ticket complet + lien suivi.<br /><span className="font-mono break-all">{orderUrl(o.id)}</span></p>
               </div>
             )}
           </div>

@@ -10,7 +10,7 @@ import { useShop } from "@/components/ShopProvider";
 import { DELIVERY_LABEL, deliveryFee, type DeliveryType } from "@/lib/delivery";
 import { fmtDA } from "@/lib/mock-data";
 import { apiPlaceOrder, ApiError, backendEnabled } from "@/lib/backend";
-import { orderUrl, type Order } from "@/lib/orders";
+import { orderQrText, type Order } from "@/lib/orders";
 import { loadWilayas, pad2, type Wilaya } from "@/lib/wilayas";
 import { useSiteData } from "@/lib/store";
 
@@ -64,10 +64,10 @@ export default function CommandePage() {
             {done.id}
           </p>
           <div className="mx-auto mt-5 w-fit rounded-3xl bg-white p-4">
-            <QRCode value={orderUrl(done.id)} size={160} />
+            <QRCode value={orderQrText(done)} size={160} />
           </div>
           <p className="mt-3 text-xs text-cream/50">
-            Scanne pour suivre ta commande • Total: <b className="text-cream">{fmtDA(done.total)}</b> ({DELIVERY_LABEL[done.delivery].fr})
+            Scanne : nom, N°, total et statut — Total: <b className="text-cream">{fmtDA(done.total)}</b> ({DELIVERY_LABEL[done.delivery].fr})
           </p>
           <div className="mt-6 grid grid-cols-2 gap-2">
             <Link href="/vetements" className="rounded-full bg-cream py-3 text-sm font-black text-ink uppercase">

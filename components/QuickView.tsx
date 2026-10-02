@@ -77,10 +77,10 @@ export default function QuickView({
             exit={{ y: 40, scale: 0.97, opacity: 0 }}
             transition={{ type: "spring", damping: 26, stiffness: 260 }}
             onClick={(e) => e.stopPropagation()}
-            className="arch-sm flex max-h-[94svh] w-full max-w-3xl flex-col overflow-hidden border border-white/15 bg-coal md:grid md:grid-cols-2"
+            className="arch-sm flex max-h-[94svh] w-full max-w-3xl flex-col overflow-hidden border border-white/15 bg-coal lg:grid lg:grid-cols-2"
           >
             {/* photo compacte : tient sur un écran téléphone */}
-            <div className="relative h-32 shrink-0 sm:h-52 md:h-auto md:min-h-full">
+            <div className="relative h-32 w-full min-w-0 shrink-0 overflow-hidden sm:h-52 lg:h-auto lg:min-h-full">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={product.image}
@@ -88,11 +88,11 @@ export default function QuickView({
                 decoding="async"
                 className="absolute inset-0 h-full w-full object-cover"
               />
-              <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent md:bg-gradient-to-r" />
+              <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent lg:bg-gradient-to-r" />
             </div>
 
             {/* colonne droite : contenu + boutons toujours visibles */}
-            <div className="flex min-h-0 flex-1 flex-col">
+            <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col">
               <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto p-4 sm:p-8">
                 <div className="relative">
                   <button
@@ -102,10 +102,10 @@ export default function QuickView({
                   >
                     <X size={18} />
                   </button>
-                  <p className="pr-10 text-[11px] font-black tracking-[0.25em] text-signal uppercase">
+                  <p className="pr-10 text-[11px] font-black tracking-[0.25em] break-words text-signal uppercase">
                     {product.category} • <span className="font-arabic">{product.nameAr}</span>
                   </p>
-                  <h3 className="mt-1 pr-10 font-display text-xl tracking-wide sm:text-3xl">
+                  <h3 className="mt-1 pr-10 font-display text-xl break-words tracking-wide sm:text-3xl">
                     {product.name}
                   </h3>
                 </div>
@@ -113,12 +113,14 @@ export default function QuickView({
                   <Star size={14} fill="currentColor" /> {product.rating} — avis clients vérifiés
                 </p>
                 {product.description ? (
-                  <p className="mt-2.5 line-clamp-2 rounded-2xl bg-white/5 p-3 text-sm leading-relaxed text-cream/80 sm:line-clamp-none sm:p-3.5">
-                    {product.description}
+                  <div className="mt-2.5 rounded-2xl bg-white/5 p-3 text-sm leading-relaxed text-cream/80 sm:p-3.5">
+                    <p className="line-clamp-2 break-words sm:line-clamp-none">{product.description}</p>
                     {product.descriptionAr ? (
-                      <span className="font-arabic mt-1 block text-cream/60">{product.descriptionAr}</span>
+                      <p className="font-arabic mt-1 line-clamp-1 break-words text-cream/60 sm:line-clamp-none">
+                        {product.descriptionAr}
+                      </p>
                     ) : null}
-                  </p>
+                  </div>
                 ) : null}
                 <div className="mt-2 flex flex-wrap items-center gap-2 sm:mt-2.5 sm:gap-3">
                   <span className="text-xl font-black sm:text-3xl">{fmtDA(product.price)}</span>

@@ -1,6 +1,7 @@
 "use client";
 
 import type { DeliveryType } from "./delivery";
+import { fmtDA } from "./mock-data";
 
 export type CartItem = {
   productId: string;
@@ -90,3 +91,16 @@ export const orderUrl = (id: string) =>
   typeof window !== "undefined"
     ? `${window.location.origin}/suivi/${id}`
     : `/suivi/${id}`;
+
+// Ticket encodé DANS le QR : n'importe quel scanner affiche nom, N°,
+// téléphone, total et statut — plus le lien de suivi en direct.
+export const orderQrText = (o: Order) =>
+  [
+    "BPR • Bon Prix Ruisseau Sports — Alger",
+    `N° commande : ${o.id}`,
+    `Nom : ${o.name}`,
+    `Tél : ${o.phone}`,
+    `Articles : ${o.items.reduce((n, i) => n + i.qty, 0)} — Total : ${fmtDA(o.total)}`,
+    `Statut : ${STATUS_LABEL[o.status].fr}`,
+    `Suivi en direct : ${orderUrl(o.id)}`,
+  ].join("\n");

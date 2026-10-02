@@ -4,7 +4,7 @@ import QRCode from "react-qr-code";
 import { PackageSearch } from "lucide-react";
 import { DELIVERY_LABEL } from "@/lib/delivery";
 import { fmtDA } from "@/lib/mock-data";
-import { orderUrl, STATUS_LABEL, unitPrice, type Order } from "@/lib/orders";
+import { orderQrText, orderUrl, STATUS_LABEL, unitPrice, type Order } from "@/lib/orders";
 import { pad2 } from "@/lib/wilayas";
 
 export function statusColor(s: Order["status"]) {
@@ -56,13 +56,16 @@ export function OrderCard({ order, showQr = true }: { order: Order; showQr?: boo
       </div>
       {showQr && (
         <div className="mt-4 flex items-center gap-4 rounded-3xl bg-ink p-4">
-          <div className="rounded-2xl bg-white p-2.5">
-            <QRCode value={orderUrl(order.id)} size={88} />
+          <div className="shrink-0 rounded-2xl bg-white p-2.5">
+            <QRCode value={orderQrText(order)} size={104} />
           </div>
           <p className="text-xs text-cream/60">
             <PackageSearch size={15} className="mb-1 text-gold" />
-            Garde ce QR — montre-le au magasin pour récupérer ta commande plus vite.
-            <span className="font-arabic block">احتفظ بهذا الرمز</span>
+            Scanne : ticket complet (nom, N°, total, statut).
+            <span className="font-arabic block">امسح الرمز لرؤية الطلب</span>
+            <a href={orderUrl(order.id)} className="mt-1 inline-block font-bold text-gold underline">
+              Suivi en direct →
+            </a>
           </p>
         </div>
       )}
