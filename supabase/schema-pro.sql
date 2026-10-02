@@ -615,6 +615,28 @@ end; $$;
 
 grant execute on function public.track_order(text, text) to anon, authenticated;
 
+-- Relit une commande juste créée (l'invité ne peut pas SELECT : RLS).
+-- Vérifie le téléphone, comme track_order. Utilisée par POST /api/orders.
+create or replace function public.get_inserted_order(p_id uuid, p_phone text)
+returns jsonb
+language plpgsql stable security definer set search_path = public
+as $$
+declare
+  o record; items jsonb;
+  clean text := regexp_replace(coalesce(p_phone, ''), '[\s-]', '', 'g');
+begin
+  select * into o from orders where id = p_id;
+  if not found then return null; end if;
+  if regexp_replace(coalesce(o.guest_phone, ''), '[\s-]', '', 'g') <> clean then
+    return null;
+  end if;
+  select coalesce(jsonb_agg(to_jsonb(i) order by i.created_at), '[]')
+    into items from order_items i where i.order_id = o.id;
+  return jsonb_build_object('order', to_jsonb(o), 'items', items);
+end; $$;
+
+grant execute on function public.get_inserted_order(uuid, text) to anon, authenticated;
+
 -- ----------------------------------------------------------------------------
 -- 18. VUES ADMIN — tableau de bord (security_invoker = RLS respectée, PG15+)
 -- ----------------------------------------------------------------------------

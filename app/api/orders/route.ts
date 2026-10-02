@@ -313,37 +313,36 @@ export async function POST(req: Request) {
   const subtotal = lines.reduce((n, l) => n + l.req.qty * l.unit, 0);
   const fee = deliveryFee(wilayaCode, delivery);
 
-  // 4. Insert commande (n° BPR- auto via trigger).
-  const { data: orderRow, error: orderErr } = await client
-    .from("orders")
-    .insert({
-      customer_id: null,
-      guest_name: name,
-      guest_phone: phone,
-      wilaya_code: wilayaCode,
-      wilaya_name: wilaya,
-      commune,
-      address,
-      delivery: delivery === "bureau" ? "stopdesk" : "home",
-      payment_method: "cod",
-      payment_status: "unpaid",
-      status: "pending",
-      subtotal,
-      delivery_fee: fee,
-      discount: 0,
-      total: subtotal + fee,
-      notes,
-    })
-    .select("*")
-    .single();
-  if (orderErr || !orderRow)
+  // 4. Insert commande SANS relecture (RLS interdit le SELECT aux invités :
+  // .select().single() échouerait alors que l'insert a réussi).
+  // L'id est généré ici, le n° BPR- par le trigger, la relecture via RPC.
+  const orderId = crypto.randomUUID();
+  const { error: orderErr } = await client.from("orders").insert({
+    id: orderId,
+    customer_id: null,
+    guest_name: name,
+    guest_phone: phone,
+    wilaya_code: wilayaCode,
+    wilaya_name: wilaya,
+    commune,
+    address,
+    delivery: delivery === "bureau" ? "stopdesk" : "home",
+    payment_method: "cod",
+    payment_status: "unpaid",
+    status: "pending",
+    subtotal,
+    delivery_fee: fee,
+    discount: 0,
+    total: subtotal + fee,
+    notes,
+  });
+  if (orderErr)
     return Response.json({ error: "db_error" }, { status: 500 });
-  const order = orderRow as unknown as DbOrderRow;
 
   // 5. Lignes avec snapshot.
   const { error: itemsErr } = await client.from("order_items").insert(
     lines.map((l) => ({
-      order_id: order.id,
+      order_id: orderId,
       product_id: l.product.id,
       variant_id: l.variant.id,
       product_name_fr: l.product.name_fr,
@@ -359,9 +358,6 @@ export async function POST(req: Request) {
     }))
   );
   if (itemsErr) {
-    // Commande sans lignes : on la retire pour ne pas polluer l'admin.
-    // (delete réservé admin via RLS : best-effort, sinon elle reste vide.)
-    await client.from("orders").delete().eq("id", order.id);
     return Response.json({ error: "db_error" }, { status: 500 });
   }
 
@@ -374,6 +370,16 @@ export async function POST(req: Request) {
       client.rpc("decrease_stock", { p_variant_id, p_qty })
     )
   );
+
+  // 7. Relecture via RPC sécurisée (téléphone vérifié) : donne le n° BPR-.
+  const { data: tracked, error: trackErr } = await client.rpc("get_inserted_order", {
+    p_id: orderId,
+    p_phone: phone,
+  });
+  if (trackErr || !tracked)
+    return Response.json({ error: "db_error" }, { status: 500 });
+  const payload = tracked as unknown as { order: DbOrderRow };
+  const order = payload.order;
 
   const cartItems: CartItem[] = lines.map((l) => ({
     productId: l.req.productId,
