@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Anton, Cairo, Inter } from "next/font/google";
 import PwaRegister from "@/components/PwaRegister";
 import SiteShell from "@/components/SiteShell";
@@ -25,6 +25,12 @@ export const metadata: Metadata = {
     type: "website",
     images: [{ url: "/logo.jpg", width: 1080, height: 1080 }],
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#e10600",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

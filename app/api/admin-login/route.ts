@@ -40,6 +40,10 @@ export async function POST(req: Request) {
   if (limited(`adminlog:${ip || "unknown"}`, 15))
     return Response.json({ ok: true }); // spammeur : on l'ignore, sans le dire
 
+  const contentLength = Number(req.headers.get("content-length") || 0);
+  if (contentLength > 10_000)
+    return Response.json({ error: "too_big" }, { status: 413 });
+
   let body: Record<string, unknown>;
   try {
     body = (await req.json()) as Record<string, unknown>;

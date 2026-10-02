@@ -637,6 +637,65 @@ end; $$;
 
 grant execute on function public.get_inserted_order(uuid, text) to anon, authenticated;
 
+-- Commande invitée ATOMIQUE (tout ou rien : jamais de commande fantôme).
+-- L'API a déjà validé + résolu prix/stock ; cette fonction écrit
+-- commande + lignes + décrémente le stock dans UNE transaction.
+-- Contourne le piège RLS : un invité ne peut pas relire sa commande
+-- pour y attacher les lignes (le SELECT masque ses propres lignes).
+create or replace function public.place_guest_order(p_order jsonb, p_items jsonb)
+returns jsonb
+language plpgsql security definer set search_path = public
+as $$
+declare
+  v_name text := trim(coalesce(p_order->>'name', ''));
+  v_phone text := regexp_replace(coalesce(p_order->>'phone', ''), '[\s-]', '', 'g');
+  v_wilaya int := coalesce((p_order->>'wilaya_code')::int, 0);
+  v_commune text := trim(coalesce(p_order->>'commune', ''));
+  v_address text := coalesce(p_order->>'address', '');
+  v_delivery delivery_type := coalesce(p_order->>'delivery', 'home')::delivery_type;
+  v_notes text := coalesce(p_order->>'notes', '');
+  v_subtotal int := coalesce((p_order->>'subtotal')::int, -1);
+  v_fee int := coalesce((p_order->>'fee')::int, -1);
+  v_id uuid := gen_random_uuid();
+  it jsonb; v_ok boolean;
+begin
+  if v_name = '' or length(v_name) > 80 then raise exception 'bad name'; end if;
+  if v_phone !~ '^0[567][0-9]{8}$' then raise exception 'bad phone'; end if;
+  if v_wilaya < 1 or v_wilaya > 58 then raise exception 'bad wilaya'; end if;
+  if v_commune = '' then raise exception 'bad commune'; end if;
+  if v_delivery = 'home' and length(v_address) < 4 then raise exception 'bad address'; end if;
+  if v_subtotal < 0 or v_fee < 0 then raise exception 'bad totals'; end if;
+  if jsonb_typeof(p_items) <> 'array' then raise exception 'bad items'; end if;
+  if jsonb_array_length(p_items) = 0 or jsonb_array_length(p_items) > 20 then raise exception 'bad items'; end if;
+
+  insert into orders (id, customer_id, guest_name, guest_phone, wilaya_code, wilaya_name,
+    commune, address, delivery, payment_method, payment_status, status,
+    subtotal, delivery_fee, discount, total, notes)
+  values (v_id, null, v_name, v_phone, v_wilaya, coalesce(p_order->>'wilaya', ''),
+    v_commune, v_address, v_delivery, 'cod', 'unpaid', 'pending',
+    v_subtotal, v_fee, 0, v_subtotal + v_fee, v_notes);
+
+  for it in select * from jsonb_array_elements(p_items) loop
+    if coalesce((it->>'qty')::int, 0) < 1 or coalesce((it->>'qty')::int, 0) > 99 then raise exception 'bad qty'; end if;
+    if coalesce((it->>'unit')::int, -1) < 0 then raise exception 'bad price'; end if;
+    insert into order_items (order_id, product_id, variant_id, product_name_fr,
+      product_name_ar, variant_label, image_url, flocage_label, flocage_price, unit_price, qty)
+    values (v_id,
+      nullif(it->>'product_id', '')::uuid, nullif(it->>'variant_id', '')::uuid,
+      coalesce(it->>'name', ''), coalesce(it->>'name_ar', ''),
+      coalesce(it->>'label', ''), coalesce(it->>'image', ''),
+      nullif(it->>'flocage', ''), coalesce((it->>'flocage_price')::int, 0),
+      (it->>'unit')::int, (it->>'qty')::int);
+    select public.decrease_stock((it->>'variant_id')::uuid, (it->>'qty')::int) into v_ok;
+    if not coalesce(v_ok, false) then raise exception 'rupture'; end if;
+  end loop;
+
+  return jsonb_build_object('id', v_id, 'order_number',
+    (select order_number from orders where id = v_id));
+end; $$;
+
+grant execute on function public.place_guest_order(jsonb, jsonb) to anon, authenticated;
+
 -- ----------------------------------------------------------------------------
 -- 18. VUES ADMIN — tableau de bord (security_invoker = RLS respectée, PG15+)
 -- ----------------------------------------------------------------------------

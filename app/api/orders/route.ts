@@ -313,73 +313,51 @@ export async function POST(req: Request) {
   const subtotal = lines.reduce((n, l) => n + l.req.qty * l.unit, 0);
   const fee = deliveryFee(wilayaCode, delivery);
 
-  // 4. Insert commande SANS relecture (RLS interdit le SELECT aux invités :
-  // .select().single() échouerait alors que l'insert a réussi).
-  // L'id est généré ici, le n° BPR- par le trigger, la relecture via RPC.
-  const orderId = crypto.randomUUID();
-  const { error: orderErr } = await client.from("orders").insert({
-    id: orderId,
-    customer_id: null,
-    guest_name: name,
-    guest_phone: phone,
-    wilaya_code: wilayaCode,
-    wilaya_name: wilaya,
-    commune,
-    address,
-    delivery: delivery === "bureau" ? "stopdesk" : "home",
-    payment_method: "cod",
-    payment_status: "unpaid",
-    status: "pending",
-    subtotal,
-    delivery_fee: fee,
-    discount: 0,
-    total: subtotal + fee,
-    notes,
-  });
-  if (orderErr)
-    return Response.json({ error: "db_error" }, { status: 500 });
-
-  // 5. Lignes avec snapshot.
-  const { error: itemsErr } = await client.from("order_items").insert(
-    lines.map((l) => ({
-      order_id: orderId,
+  // 4-7. Écriture ATOMIQUE via RPC (tout ou rien) : l'invité ne peut pas
+  // relire sa commande pour y attacher les lignes (RLS), donc tout passe
+  // par place_guest_order : commande + lignes + stock décrémenté + n° BPR-.
+  const { data: placed, error: placeErr } = await client.rpc("place_guest_order", {
+    p_order: {
+      name,
+      phone,
+      wilaya_code: wilayaCode,
+      wilaya,
+      commune,
+      address,
+      delivery: delivery === "bureau" ? "stopdesk" : "home",
+      notes,
+      subtotal,
+      fee,
+    },
+    p_items: lines.map((l) => ({
       product_id: l.product.id,
       variant_id: l.variant.id,
-      product_name_fr: l.product.name_fr,
-      product_name_ar: l.product.name_ar,
-      variant_label:
+      name: l.product.name_fr,
+      name_ar: l.product.name_ar,
+      label:
         l.variant.size +
         (l.variant.color_name_fr ? ` / ${l.variant.color_name_fr}` : ""),
-      image_url: (primaryImg.get(l.product.id) || "/logo.jpg").slice(0, 500),
-      flocage_label: (l.req.flocageLabel || "").slice(0, 40) || null,
+      image: (primaryImg.get(l.product.id) || "/logo.jpg").slice(0, 500),
+      flocage: (l.req.flocageLabel || "").slice(0, 40),
       flocage_price: Math.min(Math.max(Number(l.req.flocagePrice) || 0, 0), 10000),
-      unit_price: l.unit,
+      unit: l.unit,
       qty: l.req.qty,
-    }))
-  );
-  if (itemsErr) {
+    })),
+  });
+  if (placeErr) {
+    const msg = placeErr.message || "";
+    if (msg.includes("rupture"))
+      return Response.json(
+        { error: "rupture", details: [...new Set(lines.map((l) => l.product.name_fr))] },
+        { status: 409 }
+      );
+    if (/bad (name|phone|wilaya|commune|address|totals|items|qty|price)/.test(msg))
+      return Response.json({ error: "bad_items" }, { status: 400 });
     return Response.json({ error: "db_error" }, { status: 500 });
   }
-
-  // 6. Décrément atomique (best-effort, ne bloque jamais la commande).
-  const qtyByVariant = new Map<string, number>();
-  for (const l of lines)
-    qtyByVariant.set(l.variant.id, (qtyByVariant.get(l.variant.id) ?? 0) + l.req.qty);
-  await Promise.allSettled(
-    [...qtyByVariant].map(([p_variant_id, p_qty]) =>
-      client.rpc("decrease_stock", { p_variant_id, p_qty })
-    )
-  );
-
-  // 7. Relecture via RPC sécurisée (téléphone vérifié) : donne le n° BPR-.
-  const { data: tracked, error: trackErr } = await client.rpc("get_inserted_order", {
-    p_id: orderId,
-    p_phone: phone,
-  });
-  if (trackErr || !tracked)
+  const orderNumber = (placed as unknown as { order_number: string }).order_number;
+  if (!orderNumber)
     return Response.json({ error: "db_error" }, { status: 500 });
-  const payload = tracked as unknown as { order: DbOrderRow };
-  const order = payload.order;
 
   const cartItems: CartItem[] = lines.map((l) => ({
     productId: l.req.productId,
@@ -396,8 +374,8 @@ export async function POST(req: Request) {
   return Response.json(
     {
       order: {
-        id: order.order_number,
-        date: order.created_at,
+        id: orderNumber,
+        date: new Date().toISOString(),
         name,
         phone,
         wilaya,

@@ -20,15 +20,21 @@ export default function manifest(): MetadataRoute.Manifest {
     categories: ["shopping", "sports"],
     icons: [
       {
-        src: "/logo.jpg",
+        src: "/icons/icon-192.png",
         sizes: "192x192",
-        type: "image/jpeg",
+        type: "image/png",
       },
       {
-        src: "/logo.jpg",
+        src: "/icons/icon-512.png",
         sizes: "512x512",
-        type: "image/jpeg",
+        type: "image/png",
         purpose: "any",
+      },
+      {
+        src: "/icons/maskable-512.png",
+        sizes: "512x512",
+        type: "image/png",
+        purpose: "maskable",
       },
     ],
   };
