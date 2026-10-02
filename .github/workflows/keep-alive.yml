@@ -1,0 +1,22 @@
+name: Keep alive
+
+# Anti-sommeil : ping le site + la base tous les 2 jours.
+# - Vercel hobby ne dort jamais (serverless), mais le ping évite le cold start.
+# - Supabase gratuit met en pause après ~7 jours SANS activité : ce trafic
+#   compte comme activité et empêche la pause. Coût : zéro (1 requête tiny).
+# Aucun secret requis.
+
+on:
+  schedule:
+    - cron: "0 5 */2 * *" # tous les 2 jours à 05h00 UTC
+  workflow_dispatch: # manuel : Actions > Keep alive > Run workflow
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Wake site + database
+        run: |
+          curl -s -o /dev/null -w "health:%{http_code}\n" https://bon-prix-ruisseau.vercel.app/api/health
+          sleep 5
+          curl -s https://bon-prix-ruisseau.vercel.app/api/health
