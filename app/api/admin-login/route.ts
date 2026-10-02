@@ -53,12 +53,18 @@ export async function POST(req: Request) {
     return Response.json({ error: "bad_email" }, { status: 400 });
 
   // Best-effort : un échec d'écriture ne remonte jamais au client.
+  let city = "";
+  try {
+    city = decodeURIComponent(req.headers.get("x-vercel-ip-city") || "");
+  } catch {
+    city = req.headers.get("x-vercel-ip-city") || ""; // header malformé : brut
+  }
   try {
     await client.from("admin_login_attempts").insert({
       email,
       ip: ip.slice(0, 80),
       country: (req.headers.get("x-vercel-ip-country") || "").slice(0, 10),
-      city: decodeURIComponent(req.headers.get("x-vercel-ip-city") || "").slice(0, 80),
+      city: city.slice(0, 80),
       user_agent: (req.headers.get("user-agent") || "").slice(0, 300),
       success: body.success === true,
     });
