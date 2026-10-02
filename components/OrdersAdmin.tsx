@@ -86,6 +86,7 @@ export default function OrdersAdmin() {
   const [remote, setRemote] = useState<AdminOrder[] | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [opError, setOpError] = useState("");
+  const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const loading = refreshing || (backendEnabled && remote === null);
 
   const fetchRemote = useCallback(async () => {
@@ -97,31 +98,68 @@ export default function OrdersAdmin() {
       .order("created_at", { ascending: false })
       .limit(200);
     if (error) throw new Error("Lecture impossible — es-tu connecté en admin ?");
-    return (data as unknown as DbRow[]).map(mapRow);
+    setRemote((data as unknown as DbRow[]).map(mapRow));
+    setUpdatedAt(new Date());
   }, []);
 
   // Chargement initial : setState uniquement dans les callbacks async.
+  // En cas d'échec on le DIT (session expirée ?) au lieu d'une liste vide muette.
   useEffect(() => {
     if (!backendEnabled) return;
+    const client = supabase();
+    if (!client) return;
     let alive = true;
-    fetchRemote()
-      .then((list) => {
-        if (alive && list) setRemote(list);
+    // Promise.resolve : le builder supabase est un thenable, pas une Promise.
+    Promise.resolve(
+      client
+        .from("orders")
+        .select("*, order_items(*)")
+        .order("created_at", { ascending: false })
+        .limit(200)
+    )
+      .then(({ data, error }) => {
+        if (!alive) return;
+        if (error) throw new Error("read");
+        setRemote((data as unknown as DbRow[]).map(mapRow));
+        setUpdatedAt(new Date());
       })
-      .catch(() => {
-        /* bouton Actualiser pour réessayer */
+      .catch(async () => {
+        if (!alive) return;
+        try {
+          const { data } = await client.auth.getSession();
+          if (alive)
+            setOpError(
+              !data.session
+                ? "Session expirée — sors (bouton Sortir) puis reconnecte-toi."
+                : "Chargement impossible — touche Actualiser."
+            );
+        } catch {
+          if (alive) setOpError("Chargement impossible — touche Actualiser.");
+        }
       });
     return () => {
       alive = false;
     };
+  }, []);
+
+  // Auto-refresh : aucune commande ne reste invisible plus de 20 s.
+  useEffect(() => {
+    if (!backendEnabled) return;
+    const t = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchRemote().catch(() => {
+          /* silencieux : le bouton Actualiser affiche les erreurs */
+        });
+      }
+    }, 20000);
+    return () => clearInterval(t);
   }, [fetchRemote]);
 
   const load = useCallback(async () => {
     setRefreshing(true); // event handler : set synchrone OK
     setOpError("");
     try {
-      const list = await fetchRemote();
-      if (list) setRemote(list);
+      await fetchRemote();
     } catch (e) {
       setOpError(e instanceof Error ? e.message : "Chargement impossible");
     } finally {
@@ -202,6 +240,11 @@ export default function OrdersAdmin() {
           <RefreshCw size={15} className={loading ? "animate-spin" : ""} />
           {loading ? "Chargement…" : remote ? `Actualiser — ${remote.length} en ligne ✓` : "Charger les commandes en ligne"}
         </button>
+      )}
+      {backendEnabled && updatedAt && (
+        <p className="mt-1.5 text-center text-[11px] text-cream/40">
+          Mis à jour à {updatedAt.toLocaleTimeString("fr-DZ")} • auto toutes les 20 s
+        </p>
       )}
       {opError && (
         <p className="mt-3 rounded-2xl bg-signal/15 px-4 py-2.5 text-center text-sm font-bold text-red-300">

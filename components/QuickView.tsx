@@ -77,7 +77,7 @@ export default function QuickView({
             onClick={(e) => e.stopPropagation()}
             className="arch-sm grid max-h-[90svh] w-full max-w-3xl overflow-y-auto border border-white/15 bg-coal no-scrollbar md:grid-cols-2"
           >
-            <div className="relative min-h-72">
+            <div className="relative h-52 sm:h-auto sm:min-h-72">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={product.image}
@@ -203,6 +203,8 @@ export default function QuickView({
                   </button>
                 ))}
               </div>
+              {/* CTA toujours visibles sur téléphone : collés en bas, pas de scroll */}
+              <div className="sticky bottom-0 -mx-6 mt-4 bg-coal/95 px-6 pt-3 pb-4 backdrop-blur sm:-mx-8 sm:px-8">
               <button
                 onClick={() => {
                   // Ignore double-taps: one click = one item in the cart.
@@ -220,7 +222,7 @@ export default function QuickView({
                   setTimeout(onClose, 600);
                 }}
                 disabled={!canAdd || added}
-                className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full py-3.5 font-black transition ${
+                className={`flex w-full items-center justify-center gap-2 rounded-full py-3.5 font-black transition ${
                   canAdd
                     ? "bg-signal text-white shadow-xl shadow-signal/30 hover:scale-[1.02]"
                     : "cursor-not-allowed bg-white/10 text-cream/40"
@@ -269,6 +271,7 @@ export default function QuickView({
                     ? "Choisis ta taille pour commander"
                     : "Commander maintenant ✓"}
               </button>
+              </div>
               <p className="mt-3 text-center text-xs text-cream/50">
                 Paiement à la livraison • Échange sous 7 jours au magasin Ruisseau
               </p>
