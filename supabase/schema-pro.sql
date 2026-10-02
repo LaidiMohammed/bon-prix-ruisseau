@@ -862,6 +862,28 @@ create policy "Log admin" on admin_login_attempts for all
   using (public.is_admin()) with check (public.is_admin());
 
 -- ----------------------------------------------------------------------------
+-- 26b. STOCKAGE PHOTOS (bucket public product-images + RLS admin)
+-- L'admin envoie les photos appareil depuis le studio ; lecture publique.
+-- ----------------------------------------------------------------------------
+insert into storage.buckets (id, name, public)
+values ('product-images', 'product-images', true)
+on conflict (id) do nothing;
+
+drop policy if exists "Photos publiques" on storage.objects;
+create policy "Photos publiques" on storage.objects for select
+  using (bucket_id = 'product-images');
+drop policy if exists "Photos admin insert" on storage.objects;
+create policy "Photos admin insert" on storage.objects for insert
+  with check (bucket_id = 'product-images' and public.is_admin());
+drop policy if exists "Photos admin update" on storage.objects;
+create policy "Photos admin update" on storage.objects for update
+  using (bucket_id = 'product-images' and public.is_admin())
+  with check (bucket_id = 'product-images' and public.is_admin());
+drop policy if exists "Photos admin delete" on storage.objects;
+create policy "Photos admin delete" on storage.objects for delete
+  using (bucket_id = 'product-images' and public.is_admin());
+
+-- ----------------------------------------------------------------------------
 -- 27. VÉRIFICATION (résultat visible dans le SQL Editor)
 -- ----------------------------------------------------------------------------
 select 'wilayas' as table_name, count(*) as lignes from wilayas

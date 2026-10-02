@@ -6,6 +6,11 @@ import { ArrowLeft, Lock, LogOut, Pencil, Plus, RotateCcw, Save, Trash2, Unlock 
 import { fmtDA, type Product } from "@/lib/mock-data";
 import { useSiteData, type SiteSettings } from "@/lib/store";
 import { apiLogAdminAttempt, backendEnabled, supabase } from "@/lib/backend";
+import {
+  remoteCreateProduct,
+  remoteDeleteProduct,
+  remoteUpdateProduct,
+} from "@/lib/catalog-admin";
 import OrdersAdmin from "@/components/OrdersAdmin";
 import AdminSecurity from "@/components/AdminSecurity";
 import ProductForm from "@/components/ProductForm";
@@ -27,7 +32,7 @@ function Field({ label, value, onChange, placeholder }: { label: string; value: 
 }
 
 export default function AdminPage() {
-  const { settings, products, saveSettings, saveProducts, resetAll, ready } = useSiteData();
+  const { settings, products, saveSettings, saveProducts, resetAll, ready, reloadCatalog } = useSiteData();
   const [unlocked, setUnlocked] = useState(false);
   const [code, setCode] = useState("");
   const [email, setEmail] = useState("");
@@ -39,6 +44,47 @@ export default function AdminPage() {
   const [saved, setSaved] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [catalogError, setCatalogError] = useState("");
+
+  // Sauvegarde produit : serveur direct en mode backend (visible en ligne),
+  // local sinon. Le stock saisi est réparti sur les tailles.
+  const saveProduct = async (p: Product) => {
+    if (!backendEnabled) {
+      if (editing) saveProducts(products.map((x) => (x.id === editing.id ? p : x)));
+      else saveProducts([p, ...products]);
+      setShowForm(false);
+      setEditing(null);
+      return;
+    }
+    setSaving(true);
+    setCatalogError("");
+    try {
+      if (editing) await remoteUpdateProduct(editing.id, p);
+      else await remoteCreateProduct(p);
+      setShowForm(false);
+      setEditing(null);
+      reloadCatalog(); // recharge la liste depuis le serveur
+    } catch (e) {
+      setCatalogError(e instanceof Error ? e.message : "Sauvegarde impossible");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const delProduct = async (id: string) => {
+    if (!backendEnabled) {
+      saveProducts(products.filter((p) => p.id !== id));
+      return;
+    }
+    setCatalogError("");
+    try {
+      await remoteDeleteProduct(id);
+      reloadCatalog();
+    } catch (e) {
+      setCatalogError(e instanceof Error ? e.message : "Suppression impossible");
+    }
+  };
 
   if (!ready) return <p className="p-10 text-center">Chargement…</p>;
   const s = draft ?? settings;
@@ -156,8 +202,6 @@ export default function AdminPage() {
     setTimeout(() => setSaved(false), 2000);
   };
 
-  const delProduct = (id: string) => saveProducts(products.filter((p) => p.id !== id));
-
   return (
     <div className="min-h-screen bg-ink px-4 py-8 sm:px-8">
       <div className="mx-auto max-w-5xl">
@@ -260,17 +304,14 @@ export default function AdminPage() {
         ) : tab === "products" ? (
           <div className="mt-6">
             {backendEnabled && (
-              <p className="mb-4 rounded-3xl border border-gold/40 bg-gold/10 p-5 text-sm text-cream/80">
-                Catalogue partagé actif : les produits affichés viennent de Supabase.
-                Modifie-les dans{" "}
-                <a
-                  href="https://supabase.com/dashboard/project/gmyacokncbtojkwhzcrs/editor"
-                  target="_blank"
-                  className="font-bold text-gold underline"
-                >
-                  Supabase → Table Editor
-                </a>{" "}
-                (tables products, product_variants, product_images). L’édition intégrée arrive bientôt.
+              <p className="mb-4 rounded-3xl border border-[#25D366]/40 bg-[#25D366]/10 p-5 text-sm text-cream/80">
+                Catalogue partagé actif : tout ce que tu ajoutes ici apparaît <b>directement sur le site</b>.
+                Le stock saisi est réparti sur les tailles.
+              </p>
+            )}
+            {catalogError && (
+              <p className="mb-4 rounded-2xl bg-signal/15 px-4 py-2.5 text-center text-sm font-bold text-red-300">
+                {catalogError}
               </p>
             )}
             {!showForm && (
@@ -283,16 +324,15 @@ export default function AdminPage() {
                 <ProductForm
                   initial={editing ?? undefined}
                   onSave={(p) => {
-                    if (editing) {
-                      saveProducts(products.map((x) => (x.id === editing.id ? p : x)));
-                    } else {
-                      saveProducts([p, ...products]);
-                    }
-                    setShowForm(false);
-                    setEditing(null);
+                    void saveProduct(p);
                   }}
                   onCancel={() => { setShowForm(false); setEditing(null); }}
                 />
+                {saving && (
+                  <p className="mt-3 text-center text-sm font-bold text-gold">
+                    Enregistrement sur le serveur… / جاري الحفظ
+                  </p>
+                )}
               </div>
             )}
             <div className="mt-4 grid gap-3">

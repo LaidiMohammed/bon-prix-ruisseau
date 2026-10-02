@@ -130,6 +130,7 @@ export function useSiteData() {
     read(SETTINGS_KEY, DEFAULTS)
   );
   const [products, setProducts] = useState<Product[]>(readProducts);
+  const [catalogKey, setCatalogKey] = useState(0);
   const ready = true;
 
   // Catalogue partagé : quand le backend est branché, les prix/stocks
@@ -166,7 +167,10 @@ export function useSiteData() {
     return () => {
       alive = false;
     };
-  }, []);
+  }, [catalogKey]);
+
+  // Recharge le catalogue serveur (après ajout/modif/suppression admin).
+  const reloadCatalog = useCallback(() => setCatalogKey((k) => k + 1), []);
 
   const saveSettings = useCallback((next: SiteSettings) => {
     setSettings(next);
@@ -197,5 +201,5 @@ export function useSiteData() {
     setProducts(PRODUCTS);
   }, []);
 
-  return { settings, products, saveSettings, saveProducts, resetAll, ready };
+  return { settings, products, saveSettings, saveProducts, resetAll, ready, reloadCatalog };
 }
