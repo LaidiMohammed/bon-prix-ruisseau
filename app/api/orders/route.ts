@@ -195,8 +195,13 @@ function validReqItem(i: unknown): i is ReqItem {
 export async function POST(req: Request) {
   const client = db();
   if (!client) return Response.json({ error: "backend_off" }, { status: 503 });
-  if (limited(`${ipOf(req)}:post`, 20))
+  if (limited(`${ipOf(req)}:post`, 10))
     return Response.json({ error: "too_many" }, { status: 429 });
+
+  // Coupe les payloads absurdes avant même de parser (anti-abus).
+  const contentLength = Number(req.headers.get("content-length") || 0);
+  if (contentLength > 100_000)
+    return Response.json({ error: "too_big" }, { status: 413 });
 
   let body: Record<string, unknown>;
   try {

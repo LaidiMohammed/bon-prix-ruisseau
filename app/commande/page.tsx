@@ -138,7 +138,7 @@ export default function CommandePage() {
           importOrder(order); // copie locale pour le suivi offline sur cet appareil
         } catch (e) {
           // Erreur métier (rupture, données invalides) => on l'affiche, pas de doublon.
-          if (e instanceof ApiError && (e.status === 400 || e.status === 409 || e.status === 429)) {
+          if (e instanceof ApiError && (e.status === 400 || e.status === 409 || e.status === 413 || e.status === 429)) {
             setSubmitting(false);
             return setError(e.message);
           }

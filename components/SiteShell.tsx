@@ -11,7 +11,7 @@ import { useSiteData } from "@/lib/store";
 function Shell({ children }: { children: React.ReactNode }) {
   const { settings } = useSiteData();
   const path = usePathname();
-  const isAdmin = path.startsWith("/bpr-studio-2026");
+  const isAdmin = path.startsWith("/bpr-x9f3k72dz");
 
   if (isAdmin) return <ShopProvider>{children}</ShopProvider>;
 

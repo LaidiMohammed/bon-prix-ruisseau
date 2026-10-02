@@ -50,7 +50,9 @@ async function parse<T>(res: Response): Promise<T> {
         ? `Rupture / خلص : ${body.details.join(", ")}`
         : code === "too_many"
           ? "Trop de tentatives — réessaie dans une minute"
-          : `Erreur serveur (${code})`;
+          : code === "too_big"
+            ? "Commande trop grosse — réessaie"
+            : `Erreur serveur (${code})`;
     throw new ApiError(code, message, res.status);
   }
   return body;

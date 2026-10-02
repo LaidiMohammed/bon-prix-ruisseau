@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Flame, LockKeyhole } from "lucide-react";
+import { Flame } from "lucide-react";
 
 const LINKS = [
   { href: "/", label: "Accueil" },
@@ -17,12 +17,12 @@ export default function TopNav({ promo }: { promo: string }) {
   const router = useRouter();
   const taps = useRef(0);
 
-  // Hidden admin: tap logo 5x fast
+  // Hidden admin entry: tap logo 5x fast (no visible link anywhere).
   const tapLogo = () => {
     taps.current += 1;
     if (taps.current >= 5) {
       taps.current = 0;
-      router.push("/bpr-studio-2026");
+      router.push("/bpr-x9f3k72dz");
     }
     setTimeout(() => (taps.current = 0), 1500);
   };
@@ -64,14 +64,6 @@ export default function TopNav({ promo }: { promo: string }) {
         </button>
         <div className="relative flex items-center gap-2">
           <Link
-            href="/bpr-studio-2026"
-            aria-label="Admin"
-            title="Admin"
-            className="grid h-9 w-9 place-items-center rounded-full border border-white/15 bg-white/5 text-cream/60 transition hover:border-gold hover:text-gold md:hidden"
-          >
-            <LockKeyhole size={16} />
-          </Link>
-          <Link
             href="/vetements"
             className="relative rounded-full bg-signal px-4 py-2 text-xs font-black tracking-widest text-white uppercase shadow-lg shadow-signal/30 transition hover:scale-105 sm:px-5 sm:text-sm md:hidden"
           >
@@ -92,12 +84,6 @@ export default function TopNav({ promo }: { promo: string }) {
               {l.label}
             </Link>
           ))}
-          <Link
-            href="/bpr-studio-2026"
-            className="flex items-center gap-1.5 rounded-full border border-white/15 px-3.5 py-2 text-sm font-semibold text-cream/60 transition hover:border-gold hover:text-gold"
-          >
-            <LockKeyhole size={15} /> Admin
-          </Link>
           <Link
             href="/vetements"
             className="ml-2 rounded-full bg-signal px-5 py-2 text-sm font-bold text-white shadow-lg shadow-signal/30 transition hover:scale-105"

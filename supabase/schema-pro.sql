@@ -482,7 +482,7 @@ create policy "Commandes perso" on orders for select using (
   or exists (select 1 from customers c where c.id = orders.customer_id and c.user_id = auth.uid())
 );
 -- Création : admin OU mon profil client OU invité (nom + tél DZ valides).
--- NOTE : en prod, privilégier la route /api avec service_role (anti-spam).
+-- NOTE : les écritures passent par /api (clé anon + RLS stricte, totaux recalculés serveur).
 drop policy if exists "Passer commande" on orders;
 create policy "Passer commande" on orders for insert with check (
   public.is_admin()
