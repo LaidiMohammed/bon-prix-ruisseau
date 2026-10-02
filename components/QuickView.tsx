@@ -80,7 +80,7 @@ export default function QuickView({
             className="arch-sm flex max-h-[94svh] w-full max-w-3xl flex-col overflow-hidden border border-white/15 bg-coal md:grid md:grid-cols-2"
           >
             {/* photo compacte : tient sur un écran téléphone */}
-            <div className="relative h-40 shrink-0 sm:h-52 md:h-auto md:min-h-full">
+            <div className="relative h-32 shrink-0 sm:h-52 md:h-auto md:min-h-full">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={product.image}
@@ -93,7 +93,7 @@ export default function QuickView({
 
             {/* colonne droite : contenu + boutons toujours visibles */}
             <div className="flex min-h-0 flex-1 flex-col">
-              <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto p-5 sm:p-8">
+              <div className="no-scrollbar min-h-0 flex-1 overflow-y-auto p-4 sm:p-8">
                 <div className="relative">
                   <button
                     onClick={onClose}
@@ -105,7 +105,7 @@ export default function QuickView({
                   <p className="pr-10 text-[11px] font-black tracking-[0.25em] text-signal uppercase">
                     {product.category} • <span className="font-arabic">{product.nameAr}</span>
                   </p>
-                  <h3 className="mt-1.5 pr-10 font-display text-2xl tracking-wide sm:text-3xl">
+                  <h3 className="mt-1 pr-10 font-display text-xl tracking-wide sm:text-3xl">
                     {product.name}
                   </h3>
                 </div>
@@ -120,8 +120,8 @@ export default function QuickView({
                     ) : null}
                   </p>
                 ) : null}
-                <div className="mt-2.5 flex flex-wrap items-center gap-3">
-                  <span className="text-2xl font-black sm:text-3xl">{fmtDA(product.price)}</span>
+                <div className="mt-2 flex flex-wrap items-center gap-2 sm:mt-2.5 sm:gap-3">
+                  <span className="text-xl font-black sm:text-3xl">{fmtDA(product.price)}</span>
                   {product.oldPrice && (
                     <span className="text-cream/40 line-through">
                       {fmtDA(product.oldPrice)}
@@ -143,7 +143,7 @@ export default function QuickView({
                 {/* flocage repliable : le modal tient sans scroll */}
                 <button
                   onClick={() => setShowFlock((v) => !v)}
-                  className="mt-3 flex w-full items-center justify-between rounded-2xl bg-white/5 px-4 py-2.5 text-sm font-bold tracking-widest uppercase"
+                  className="mt-2.5 flex w-full items-center justify-between rounded-2xl bg-white/5 px-4 py-2 text-sm font-bold tracking-widest uppercase sm:mt-3 sm:py-2.5"
                 >
                   <span className="text-cream/70">
                     Flocage — الطباعة{" "}
@@ -211,15 +211,16 @@ export default function QuickView({
                   </>
                 )}
 
-                <p className="mt-3 text-sm font-bold tracking-widest text-cream/60 uppercase">
+                <p className="mt-2.5 text-sm font-bold tracking-widest text-cream/60 uppercase">
                   Taille — اختر المقاس
                 </p>
-                <div className="mt-2 flex flex-wrap gap-2 pb-1">
+                {/* tailles sur UNE ligne scrollable : tout visible sans scroll vertical */}
+                <div className="no-scrollbar mt-1.5 flex flex-nowrap gap-1.5 overflow-x-auto pb-1 sm:flex-wrap sm:overflow-visible">
                   {product.sizes.map((s) => (
                     <button
                       key={s}
                       onClick={() => setSize(s)}
-                      className={`rounded-full px-4 py-2 text-sm font-bold transition ${
+                      className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-bold transition sm:px-4 sm:py-2 sm:text-sm ${
                         size === s
                           ? "bg-signal text-white"
                           : "bg-white/10 hover:bg-white/20"
@@ -232,7 +233,7 @@ export default function QuickView({
               </div>
 
               {/* boutons FIXES : jamais de scroll pour commander */}
-              <div className="shrink-0 border-t border-white/10 bg-coal px-5 pt-3 pb-4 sm:px-8 sm:pb-5">
+              <div className="shrink-0 border-t border-white/10 bg-coal px-4 pt-2.5 pb-3.5 sm:px-8 sm:pt-3 sm:pb-5">
                 <button
                   onClick={() => {
                     // Ignore double-taps: one click = one item in the cart.
@@ -250,7 +251,7 @@ export default function QuickView({
                     setTimeout(onClose, 600);
                   }}
                   disabled={!canAdd || added}
-                  className={`flex w-full items-center justify-center gap-2 rounded-full py-3.5 font-black transition ${
+                  className={`flex w-full items-center justify-center gap-2 rounded-full py-3 font-black transition sm:py-3.5 ${
                     canAdd
                       ? "bg-signal text-white shadow-xl shadow-signal/30 hover:scale-[1.02]"
                       : "cursor-not-allowed bg-white/10 text-cream/40"
@@ -286,7 +287,7 @@ export default function QuickView({
                     router.push("/commande");
                   }}
                   disabled={!canAdd || leaving}
-                  className={`mt-2.5 flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-black tracking-widest uppercase transition ${
+                  className={`mt-2 flex w-full items-center justify-center gap-2 rounded-full py-2.5 text-sm font-black tracking-widest uppercase transition sm:mt-2.5 sm:py-3 ${
                     canAdd
                       ? "bg-cream text-ink hover:bg-signal hover:text-white"
                       : "cursor-not-allowed bg-white/10 text-cream/40"
