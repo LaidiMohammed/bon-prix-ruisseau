@@ -1,0 +1,15 @@
+version: 2
+updates:
+  # Dépendances site : 1 PR/semaine max si patch de sécurité ou mise à jour.
+  # Évite le "code rot" : un site non patché pendant 10 ans devient fragile.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 5
+    labels: ["dependencies"]
+  # Workflows GitHub eux-mêmes.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
