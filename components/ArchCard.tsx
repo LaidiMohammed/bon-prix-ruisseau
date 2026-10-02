@@ -13,6 +13,9 @@ export default function ArchCard({
   index?: number;
   onQuickView: (p: Product) => void;
 }) {
+  const stock = product.stock ?? 10;
+  const inStock = stock > 0;
+  const lowStock = stock > 0 && stock <= 5;
   return (
     <motion.article
       initial={{ opacity: 0, y: 40 }}
@@ -31,7 +34,10 @@ export default function ArchCard({
             src={product.image}
             alt={product.name}
             loading="lazy"
-            className="h-full w-full object-cover transition duration-700 group-hover:scale-110"
+            decoding="async"
+            className={`h-full w-full object-cover transition duration-700 group-hover:scale-110 ${
+              inStock ? "" : "opacity-70 grayscale-[0.5]"
+            }`}
           />
           <div className="absolute inset-0 bg-gradient-to-t from-ink via-transparent to-transparent" />
           {product.tag && (
@@ -44,10 +50,14 @@ export default function ArchCard({
           </span>
           <span
             className={`absolute right-3 bottom-3 rounded-full px-2.5 py-1 text-[10px] font-black tracking-widest uppercase backdrop-blur ${
-              (product.stock ?? 10) > 0 ? "bg-[#25D366]/85 text-ink" : "bg-signal/90 text-white"
+              inStock
+                ? lowStock
+                  ? "bg-gold/90 text-ink"
+                  : "bg-[#25D366]/85 text-ink"
+                : "bg-signal/90 text-white"
             }`}
           >
-            {(product.stock ?? 10) > 0 ? "● En stock" : "Rupture"}
+            {inStock ? (lowStock ? "Stock limité" : "● En stock") : "Rupture"}
           </span>
         </div>
         <div className="p-4 pb-5 text-center">
@@ -68,8 +78,14 @@ export default function ArchCard({
               </span>
             )}
           </div>
-          <span className="mt-3 block rounded-full bg-cream py-2 text-xs font-black tracking-widest text-ink uppercase transition group-hover:bg-signal group-hover:text-white">
-            Voir + Commander
+          <span
+            className={`mt-3 block rounded-full py-2 text-xs font-black tracking-widest uppercase transition ${
+              inStock
+                ? "bg-cream text-ink group-hover:bg-signal group-hover:text-white"
+                : "bg-white/10 text-cream/50"
+            }`}
+          >
+            {inStock ? "Voir + Commander" : "Voir • Rupture"}
           </span>
         </div>
       </button>

@@ -15,7 +15,9 @@ import { useSiteData } from "@/lib/store";
 export default function HomePage() {
   const { settings, products } = useSiteData();
   const [quick, setQuick] = useState<Product | null>(null);
-  const best = products.slice(0, 4);
+  const best = [...products]
+    .sort((a, b) => ((b.stock ?? 10) > 0 ? 1 : 0) - ((a.stock ?? 10) > 0 ? 1 : 0))
+    .slice(0, 4);
 
   return (
     <div>

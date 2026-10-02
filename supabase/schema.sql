@@ -61,3 +61,36 @@ create policy "public read products" on products for select using (true);
 create policy "public read settings" on site_settings for select using (true);
 create policy "anyone can place orders" on orders for insert with check (true);
 create policy "public read own orders" on orders for select using (true);
+
+-- Atomic stock decrement (many users ordering at once never drive stock below 0).
+-- Called by POST /api/orders after inserting. No-op if the product isn't in the table.
+create or replace function decrement_stock(p_id text, p_qty int)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  update products
+  set stock = greatest(0, stock - greatest(p_qty, 0))
+  where id = p_id;
+end;
+$$;
+
+-- Admin status change via PATCH /api/orders (anon cannot UPDATE directly).
+create or replace function set_order_status(p_id text, p_status text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if p_status not in ('pending', 'validated', 'cancelled', 'delivered') then
+    raise exception 'bad status';
+  end if;
+  update orders set status = p_status where id = p_id;
+end;
+$$;
+
+grant execute on function decrement_stock(text, int) to anon, authenticated;
+grant execute on function set_order_status(text, text) to anon, authenticated;

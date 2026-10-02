@@ -1,0 +1,28 @@
+name: Supabase schema
+
+# Applies supabase/schema-pro.sql to the Supabase project.
+# The SQL script is idempotent (IF NOT EXISTS / ON CONFLICT), safe to re-run.
+# Needs repo secret SUPABASE_DB_URL = Session pooler connection string
+# (Supabase Dashboard > Project Settings > Database > Connection string).
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "supabase/schema-pro.sql"
+      - ".github/workflows/supabase-schema.yml"
+  workflow_dispatch: # manual: Actions tab > Supabase schema > Run workflow
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install psql client
+        run: sudo apt-get update -y && sudo apt-get install -y postgresql-client
+
+      - name: Apply schema-pro.sql
+        env:
+          SUPABASE_DB_URL: ${{ secrets.SUPABASE_DB_URL }}
+        run: psql "$SUPABASE_DB_URL" -v ON_ERROR_STOP=1 -f supabase/schema-pro.sql

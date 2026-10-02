@@ -71,13 +71,12 @@ export default function TopNav({ promo }: { promo: string }) {
           >
             <LockKeyhole size={16} />
           </Link>
-          <a
-            href="https://wa.me/213550000000"
-            target="_blank"
+          <Link
+            href="/vetements"
             className="relative rounded-full bg-signal px-4 py-2 text-xs font-black tracking-widest text-white uppercase shadow-lg shadow-signal/30 transition hover:scale-105 sm:px-5 sm:text-sm md:hidden"
           >
             Commander
-          </a>
+          </Link>
         </div>
         <div className="relative hidden items-center gap-1 md:flex">
           {LINKS.map((l) => (
@@ -99,13 +98,12 @@ export default function TopNav({ promo }: { promo: string }) {
           >
             <LockKeyhole size={15} /> Admin
           </Link>
-          <a
-            href="https://wa.me/213550000000"
-            target="_blank"
+          <Link
+            href="/vetements"
             className="ml-2 rounded-full bg-signal px-5 py-2 text-sm font-bold text-white shadow-lg shadow-signal/30 transition hover:scale-105"
           >
             Commander
-          </a>
+          </Link>
         </div>
       </nav>
     </header>

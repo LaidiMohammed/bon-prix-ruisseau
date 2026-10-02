@@ -161,6 +161,13 @@ export default function ProductForm({
         <label className="block">
           <span className="mb-1 block text-[11px] font-black tracking-widest text-cream/60 uppercase">Quantité en stock *</span>
           <input value={stock} onChange={(e) => setStock(e.target.value)} placeholder="10 — 0 = rupture" inputMode="numeric" className={inputCls} />
+          <span className="mt-1.5 block text-xs font-bold">
+            {(Number(stock) || 0) > 0 ? (
+              <span className="text-[#25D366]">● En stock — badge vert sur le site</span>
+            ) : (
+              <span className="text-red-300">Rupture • خلص — badge rouge, commande bloquée</span>
+            )}
+          </span>
         </label>
         <label className="block">
           <span className="mb-1 block text-[11px] font-black tracking-widest text-cream/60 uppercase">Catégorie</span>

@@ -1,6 +1,7 @@
 "use client";
 
-import { Clock, MapPin, MessageCircle, Navigation, Phone } from "lucide-react";
+import { Clock, MapPin, Navigation, Phone, ShoppingBag } from "lucide-react";
+import Link from "next/link";
 import Reveal from "@/components/Reveal";
 import SectionHeading from "@/components/SectionHeading";
 import ZoomBg from "@/components/ZoomBg";
@@ -46,13 +47,12 @@ export default function MagasinPage() {
                 >
                   <Navigation size={16} /> Itinéraire
                 </a>
-                <a
-                  href={settings.socials.whatsapp}
-                  target="_blank"
-                  className="flex items-center justify-center gap-2 rounded-full bg-[#25D366] py-3 text-sm font-black text-ink uppercase"
+                <Link
+                  href="/vetements"
+                  className="flex items-center justify-center gap-2 rounded-full bg-signal py-3 text-sm font-black text-white uppercase"
                 >
-                  <MessageCircle size={16} /> WhatsApp
-                </a>
+                  <ShoppingBag size={16} /> Commander sur site
+                </Link>
               </div>
               <a
                 href={`tel:${settings.socials.phone}`}

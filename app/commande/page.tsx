@@ -9,6 +9,7 @@ import ZoomBg from "@/components/ZoomBg";
 import { useShop } from "@/components/ShopProvider";
 import { DELIVERY_LABEL, deliveryFee, type DeliveryType } from "@/lib/delivery";
 import { fmtDA } from "@/lib/mock-data";
+import { apiPlaceOrder, backendEnabled } from "@/lib/backend";
 import { orderUrl, type Order } from "@/lib/orders";
 import { loadWilayas, pad2, type Wilaya } from "@/lib/wilayas";
 import { useSiteData } from "@/lib/store";
@@ -28,6 +29,7 @@ export default function CommandePage() {
   const [delivery, setDelivery] = useState<DeliveryType>("home");
   const [notes, setNotes] = useState("");
   const [error, setError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState<Order | null>(null);
 
   const { place } = useShop();
@@ -95,7 +97,9 @@ export default function CommandePage() {
     );
   }
 
-  const submit = () => {
+  const submit = async () => {
+    // Lock: double-taps under lag can never create two orders.
+    if (submitting) return;
     const cleanPhone = phone.replace(/[\s-]/g, "");
     if (name.trim().length < 3) return setError("Écris ton nom complet / اكتب اسمك الكامل");
     if (!/^0(5|6|7)\d{8}$/.test(cleanPhone))
@@ -104,30 +108,55 @@ export default function CommandePage() {
     if (!commune) return setError("Choisis ta commune / اختر بلديتك");
     if (delivery === "home" && address.trim().length < 4)
       return setError("Écris ton adresse pour la livraison à domicile");
-    setError("");
-    const order = place({
-      name: name.trim(),
-      phone: cleanPhone,
-      wilaya: wilaya.name,
-      wilayaCode,
-      commune,
-      address: address.trim(),
-      delivery,
-      notes: notes.trim(),
-      items,
+    const ruptured = items.filter((i) => {
+      const p = products.find((pp) => pp.id === i.productId);
+      return p && (p.stock ?? 10) <= 0;
     });
-    // décrémente le stock des modèles commandés
-    saveProducts(
-      products.map((p) => {
-        const qty = items
-          .filter((i) => i.productId === p.id)
-          .reduce((n, i) => n + i.qty, 0);
-        return qty > 0 ? { ...p, stock: Math.max(0, (p.stock ?? 0) - qty) } : p;
-      })
-    );
-    clearCart();
-    setDone(order);
-    window.scrollTo(0, 0);
+    if (ruptured.length > 0)
+      return setError(
+        `Rupture de stock / خلص : ${ruptured.map((i) => i.name).join(", ")} — retire-le du panier pour continuer`
+      );
+    setError("");
+    setSubmitting(true);
+    try {
+      const draft = {
+        name: name.trim(),
+        phone: cleanPhone,
+        wilaya: wilaya.name,
+        wilayaCode,
+        commune,
+        address: address.trim(),
+        delivery,
+        notes: notes.trim(),
+        items,
+      };
+      let order: Order;
+      if (backendEnabled) {
+        try {
+          // Server first: one shared list for all users, totals recomputed server-side.
+          order = await apiPlaceOrder(draft);
+        } catch {
+          // Server down/busy: never block the client — keep local mode.
+          order = place(draft);
+        }
+      } else {
+        order = place(draft);
+      }
+      // décrémente le stock des modèles commandés (copie locale)
+      saveProducts(
+        products.map((p) => {
+          const qty = items
+            .filter((i) => i.productId === p.id)
+            .reduce((n, i) => n + i.qty, 0);
+          return qty > 0 ? { ...p, stock: Math.max(0, (p.stock ?? 0) - qty) } : p;
+        })
+      );
+      clearCart();
+      setDone(order);
+      window.scrollTo(0, 0);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -210,12 +239,25 @@ export default function CommandePage() {
             <div className="flex justify-between text-cream/70"><span>Livraison {DELIVERY_LABEL[delivery].fr}</span><span>{fmtDA(fee)}</span></div>
             <div className="flex justify-between border-t border-white/10 pt-2 text-lg font-black"><span>Total — المجموع</span><span className="text-gold">{fmtDA(subtotal + fee)}</span></div>
             <p className="text-xs text-cream/50">Paiement à la livraison (Cash on delivery)</p>
+            <p className="text-xs text-cream/50">
+              {backendEnabled
+                ? "Envoi direct au magasin ✓ (serveur partagé)"
+                : "Mode simple : commande gardée sur cet appareil"}
+            </p>
           </div>
 
           {error && <p className="mt-4 rounded-2xl bg-signal/15 px-4 py-3 text-center text-sm font-bold text-red-300">{error}</p>}
 
-          <button onClick={submit} className="mt-5 w-full rounded-full bg-signal py-4 font-black tracking-widest uppercase shadow-xl shadow-signal/30 transition hover:scale-[1.01]">
-            Confirmer la commande ✓
+          <button
+            onClick={submit}
+            disabled={submitting}
+            className={`mt-5 w-full rounded-full py-4 font-black tracking-widest uppercase shadow-xl transition ${
+              submitting
+                ? "cursor-wait bg-white/20 text-cream/60 shadow-none"
+                : "bg-signal shadow-signal/30 hover:scale-[1.01]"
+            }`}
+          >
+            {submitting ? "Envoi… / جاري الإرسال" : "Confirmer la commande ✓"}
           </button>
         </div>
       </section>

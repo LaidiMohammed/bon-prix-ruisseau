@@ -12,6 +12,7 @@ import { useSiteData } from "@/lib/store";
 export default function VetementsPage() {
   const { settings, products } = useSiteData();
   const [cat, setCat] = useState<string>("Tous");
+  const [avail, setAvail] = useState<"all" | "in" | "out">("all");
   const [q, setQ] = useState("");
   const [quick, setQuick] = useState<Product | null>(null);
 
@@ -20,10 +21,12 @@ export default function VetementsPage() {
       products.filter(
         (p) =>
           (cat === "Tous" || p.category === cat) &&
+          (avail === "all" ||
+            (avail === "in" ? (p.stock ?? 10) > 0 : (p.stock ?? 10) <= 0)) &&
           (q.trim() === "" ||
             `${p.name} ${p.nameAr} ${p.category}`.toLowerCase().includes(q.toLowerCase()))
       ),
-    [products, cat, q]
+    [products, cat, avail, q]
   );
 
   return (
@@ -32,7 +35,7 @@ export default function VetementsPage() {
       <section className="mx-auto max-w-6xl px-5 sm:px-8">
         <SectionHeading kicker="Boutique" title="Vêtements" arabic="الملابس" />
         <p className="mx-auto mt-3 max-w-xl text-center text-cream/70">
-          Maillots, survêtements, sneakers — clique sur un modèle pour voir et commander sur WhatsApp.
+          Maillots, survêtements, sneakers — clique sur un modèle, choisis ta taille et commande directement sur le site.
         </p>
 
         {/* search */}
@@ -63,11 +66,39 @@ export default function VetementsPage() {
 
         <p className="mt-6 text-center text-xs tracking-widest text-cream/50 uppercase">
           {list.length} modèle{list.length > 1 ? "s" : ""} — {cat}
+          {avail === "in" ? " — En stock" : avail === "out" ? " — Rupture" : ""}
         </p>
+
+        {/* availability — En stock / Rupture */}
+        <div className="mt-4 flex justify-center gap-2">
+          {(
+            [
+              { v: "all", l: "Tous" },
+              { v: "in", l: "● En stock" },
+              { v: "out", l: "Rupture" },
+            ] as { v: typeof avail; l: string }[]
+          ).map((o) => (
+            <button
+              key={o.v}
+              onClick={() => setAvail(o.v)}
+              className={`rounded-full px-5 py-2 text-xs font-black tracking-widest uppercase transition ${
+                avail === o.v
+                  ? o.v === "out"
+                    ? "bg-signal text-white shadow-lg shadow-signal/30"
+                    : o.v === "in"
+                      ? "bg-[#25D366] text-ink shadow-lg shadow-[#25D366]/30"
+                      : "bg-cream text-ink"
+                  : "bg-white/10 hover:bg-white/20"
+              }`}
+            >
+              {o.l}
+            </button>
+          ))}
+        </div>
 
         {list.length === 0 ? (
           <p className="mt-10 text-center text-cream/60">
-            Aucun modèle trouvé. <span className="font-arabic">جرب كلمة أخرى</span> — ou demande sur WhatsApp, on a du nouveau chaque semaine.
+            Aucun modèle trouvé. <span className="font-arabic">جرب كلمة أخرى</span> — du nouveau chaque semaine.
           </p>
         ) : (
           <div className="mt-6 grid grid-cols-2 gap-4 sm:gap-6 lg:grid-cols-4">

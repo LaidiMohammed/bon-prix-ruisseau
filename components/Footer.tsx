@@ -68,12 +68,18 @@ export default function Footer({ settings }: { settings: SiteSettings }) {
           >
             <Phone size={17} className="text-signal" /> {settings.socials.phone}
           </a>
-          <a
-            href={settings.socials.whatsapp}
-            target="_blank"
-            className="mt-2 block rounded-2xl bg-[#25D366] px-4 py-3 text-center text-sm font-black text-ink"
+          <Link
+            href="/commande"
+            className="mt-2 block rounded-2xl bg-signal px-4 py-3 text-center text-sm font-black text-white"
           >
-            WhatsApp — Commande rapide
+            Commander sur le site →
+          </Link>
+          <a
+            href={s.whatsapp}
+            target="_blank"
+            className="mt-2 block text-center text-xs text-cream/50 hover:text-cream"
+          >
+            Une question ? Écris-nous sur WhatsApp
           </a>
           <p className="font-arabic mt-3 text-sm text-cream/60">{settings.shop.hoursAr}</p>
         </div>

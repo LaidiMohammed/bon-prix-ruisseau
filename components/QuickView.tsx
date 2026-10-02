@@ -1,7 +1,8 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { MessageCircle, ShoppingBag, Star, X } from "lucide-react";
+import { ArrowRight, ShoppingBag, Star, X } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { fmtDA, FLOCAGE_PRICES, STAR_FLOCK, type Product } from "@/lib/mock-data";
 import { useShop } from "./ShopProvider";
@@ -17,11 +18,13 @@ export default function QuickView({
 }) {
   const [size, setSize] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
+  const [leaving, setLeaving] = useState(false);
   const [flock, setFlock] = useState<FlockMode>("none");
   const [flockPlayer, setFlockPlayer] = useState("");
   const [flockName, setFlockName] = useState("");
   const [flockNumber, setFlockNumber] = useState("");
-  const { add } = useShop();
+  const { add, setCartOpen } = useShop();
+  const router = useRouter();
 
   // reset when another product opens
   const pid = product?.id;
@@ -30,13 +33,16 @@ export default function QuickView({
     setLastPid(pid);
     setSize(null);
     setAdded(false);
+    setLeaving(false);
     setFlock("none");
     setFlockPlayer("");
     setFlockName("");
     setFlockNumber("");
   }
 
-  const inStock = (product?.stock ?? 10) > 0;
+  const stock = product?.stock ?? 10;
+  const inStock = stock > 0;
+  const lowStock = stock > 0 && stock <= 5;
   const flockInfo = !product
     ? { label: undefined as string | undefined, price: 0, ok: true }
     : flock === "none"
@@ -76,6 +82,7 @@ export default function QuickView({
               <img
                 src={product.image}
                 alt={product.name}
+                decoding="async"
                 className="absolute inset-0 h-full w-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent md:bg-gradient-to-r" />
@@ -114,10 +121,14 @@ export default function QuickView({
                 )}
                 <span
                   className={`rounded-full px-3 py-1 text-[11px] font-black tracking-widest uppercase ${
-                    inStock ? "bg-[#25D366]/15 text-[#25D366]" : "bg-signal/15 text-red-300"
+                    inStock
+                      ? lowStock
+                        ? "bg-gold/15 text-gold"
+                        : "bg-[#25D366]/15 text-[#25D366]"
+                      : "bg-signal/15 text-red-300"
                   }`}
                 >
-                  {inStock ? "● En stock" : "Rupture"}
+                  {inStock ? (lowStock ? "● Stock limité" : "● En stock • متوفر") : "Rupture • خلص"}
                 </span>
               </div>
               <p className="mt-4 text-sm font-bold tracking-widest text-cream/60 uppercase">
@@ -194,7 +205,8 @@ export default function QuickView({
               </div>
               <button
                 onClick={() => {
-                  if (!product || !canAdd) return;
+                  // Ignore double-taps: one click = one item in the cart.
+                  if (!product || !canAdd || added) return;
                   add({
                     productId: product.id,
                     name: product.name,
@@ -207,7 +219,7 @@ export default function QuickView({
                   setAdded(true);
                   setTimeout(onClose, 600);
                 }}
-                disabled={!canAdd}
+                disabled={!canAdd || added}
                 className={`mt-4 flex w-full items-center justify-center gap-2 rounded-full py-3.5 font-black transition ${
                   canAdd
                     ? "bg-signal text-white shadow-xl shadow-signal/30 hover:scale-[1.02]"
@@ -225,15 +237,38 @@ export default function QuickView({
                         ? "Choisis ton flocage"
                         : `Ajouter au panier${flockInfo.price ? ` + ${fmtDA(flockInfo.price)}` : ""}`}
               </button>
-              <a
-                href={`https://wa.me/213550000000?text=${encodeURIComponent(
-                  `Salam BPR, je veux: ${product.name} (${size ?? "taille à confirmer"})${flockInfo.label ? ` + flocage ${flockInfo.label}` : ""} — ${fmtDA(product.price + flockInfo.price)}`
-                )}`}
-                target="_blank"
-                className="mt-2.5 flex items-center justify-center gap-2 rounded-full border border-[#25D366]/50 py-3 text-sm font-bold text-[#25D366] transition hover:bg-[#25D366]/10"
+              <button
+                onClick={() => {
+                  // Ignore double-taps while navigating to checkout.
+                  if (!product || !canAdd || leaving) return;
+                  setLeaving(true);
+                  add({
+                    productId: product.id,
+                    name: product.name,
+                    size: size as string,
+                    price: product.price,
+                    image: product.image,
+                    flocageLabel: flockInfo.label,
+                    flocagePrice: flockInfo.price || undefined,
+                  });
+                  setCartOpen(false);
+                  onClose();
+                  router.push("/commande");
+                }}
+                disabled={!canAdd || leaving}
+                className={`mt-2.5 flex w-full items-center justify-center gap-2 rounded-full py-3 text-sm font-black tracking-widest uppercase transition ${
+                  canAdd
+                    ? "bg-cream text-ink hover:bg-signal hover:text-white"
+                    : "cursor-not-allowed bg-white/10 text-cream/40"
+                }`}
               >
-                <MessageCircle size={17} /> ou WhatsApp direct
-              </a>
+                <ArrowRight size={17} />
+                {!inStock
+                  ? "Rupture — bientôt de retour"
+                  : !size
+                    ? "Choisis ta taille pour commander"
+                    : "Commander maintenant ✓"}
+              </button>
               <p className="mt-3 text-center text-xs text-cream/50">
                 Paiement à la livraison • Échange sous 7 jours au magasin Ruisseau
               </p>

@@ -54,43 +54,47 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     writeLS(CART_KEY, next);
   }, []);
 
-  const add = useCallback(
-    (item: Omit<CartItem, "qty">, qty = 1) => {
-      const found = items.find((i) =>
+  const add = useCallback((item: Omit<CartItem, "qty">, qty = 1) => {
+    // Functional update: two rapid taps never lose an item (no stale closure).
+    setItems((prev) => {
+      const found = prev.find((i) =>
         sameItem(i, item.productId, item.size, item.flocageLabel)
       );
       const next = found
-        ? items.map((i) =>
+        ? prev.map((i) =>
             sameItem(i, item.productId, item.size, item.flocageLabel)
               ? { ...i, qty: i.qty + qty }
               : i
           )
-        : [...items, { ...item, qty }];
-      saveItems(next);
-      setCartOpen(true);
-    },
-    [items, saveItems]
-  );
+        : [...prev, { ...item, qty }];
+      writeLS(CART_KEY, next);
+      return next;
+    });
+    setCartOpen(true);
+  }, []);
 
   const setQty = useCallback(
-    (productId: string, size: string, flocageLabel: string | undefined, qty: number) => {
-      saveItems(
-        qty <= 0
-          ? items.filter((i) => !sameItem(i, productId, size, flocageLabel))
-          : items.map((i) =>
-              sameItem(i, productId, size, flocageLabel) ? { ...i, qty } : i
-            )
-      );
+    (
+      productId: string,
+      size: string,
+      flocageLabel: string | undefined,
+      qty: number
+    ) => {
+      setItems((prev) => {
+        const next =
+          qty <= 0
+            ? prev.filter((i) => !sameItem(i, productId, size, flocageLabel))
+            : prev.map((i) =>
+                sameItem(i, productId, size, flocageLabel) ? { ...i, qty } : i
+              );
+        writeLS(CART_KEY, next);
+        return next;
+      });
     },
-    [items, saveItems]
+    []
   );
 
   const clearCart = useCallback(() => saveItems([]), [saveItems]);
-
-  const saveOrders = useCallback((next: Order[]) => {
-    setOrders(next);
-    writeLS(ORDERS_KEY, next);
-  }, []);
 
   const place = useCallback(
     (
@@ -107,23 +111,32 @@ export function ShopProvider({ children }: { children: ReactNode }) {
         fee,
         total: subtotal + fee,
       };
-      saveOrders([order, ...orders]);
+      // Functional prepend: rapid successive orders never overwrite each other.
+      setOrders((prev) => {
+        const next = [order, ...prev];
+        writeLS(ORDERS_KEY, next);
+        return next;
+      });
       return order;
     },
-    [orders, saveOrders]
+    []
   );
 
-  const setStatus = useCallback(
-    (id: string, status: OrderStatus) => {
-      saveOrders(orders.map((o) => (o.id === id ? { ...o, status } : o)));
-    },
-    [orders, saveOrders]
-  );
+  const setStatus = useCallback((id: string, status: OrderStatus) => {
+    setOrders((prev) => {
+      const next = prev.map((o) => (o.id === id ? { ...o, status } : o));
+      writeLS(ORDERS_KEY, next);
+      return next;
+    });
+  }, []);
 
-  const removeOrder = useCallback(
-    (id: string) => saveOrders(orders.filter((o) => o.id !== id)),
-    [orders, saveOrders]
-  );
+  const removeOrder = useCallback((id: string) => {
+    setOrders((prev) => {
+      const next = prev.filter((o) => o.id !== id);
+      writeLS(ORDERS_KEY, next);
+      return next;
+    });
+  }, []);
 
   const value = useMemo<ShopCtx>(
     () => ({
