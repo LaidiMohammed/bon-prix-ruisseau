@@ -6,11 +6,16 @@ name: Supabase schema
 # (Supabase Dashboard > Project Settings > Database > Connection string).
 
 on:
-  push:
-    branches: [master]
-    paths:
-      - "supabase/schema-pro.sql"
-      - ".github/workflows/supabase-schema.yml"
+  # Manuel uniquement (onglet Actions > Supabase schema > Run workflow).
+  # Pas d'auto-run au push : sans le secret SUPABASE_DB_URL chaque run
+  # échouait et envoyait des emails. Pour réactiver l'auto-apply :
+  # 1. ajoute le secret SUPABASE_DB_URL (Session pooler URI),
+  # 2. remets le bloc push ci-dessous.
+  #  push:
+  #    branches: [master]
+  #    paths:
+  #      - "supabase/schema-pro.sql"
+  #      - ".github/workflows/supabase-schema.yml"
   workflow_dispatch: # manual: Actions tab > Supabase schema > Run workflow
 
 jobs:
