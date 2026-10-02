@@ -70,10 +70,16 @@ async function uploadPhoto(
   const { error } = await client.storage
     .from("product-images")
     .upload(path, blob, { contentType: blob.type || "image/jpeg", upsert: false });
-  if (error)
-    throw new Error(
-      "Envoi photo impossible — lance le SQL « Stockage photos » (section 26b) dans Supabase."
-    );
+  if (error) {
+    const msg = (error.message || "").toLowerCase();
+    if (msg.includes("bucket") && msg.includes("not found"))
+      throw new Error(
+        "Stockage photos absent — lance le SQL « Stockage photos » (section 26b) dans Supabase, puis réessaie."
+      );
+    if (msg.includes("row-level") || msg.includes("policy") || msg.includes("unauthorized"))
+      throw new Error("Non autorisé — reconnecte-toi en admin puis réessaie.");
+    throw new Error(`Envoi photo impossible (${error.message || "réseau ?"}) — réessaie.`);
+  }
   const { data } = client.storage.from("product-images").getPublicUrl(path);
   return data.publicUrl;
 }

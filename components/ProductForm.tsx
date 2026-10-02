@@ -55,6 +55,7 @@ export default function ProductForm({
   const [sizes, setSizes] = useState((initial?.sizes ?? ["S", "M", "L", "XL"]).join(", "));
   const [stock, setStock] = useState(String(initial?.stock ?? 10));
   const [image, setImage] = useState(initial?.image ?? "");
+  const [photoKB, setPhotoKB] = useState(0); // poids après compression (rassure pour 100+ produits)
   const [tag, setTag] = useState(initial?.tag ?? "");
   const [error, setError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
@@ -62,9 +63,12 @@ export default function ProductForm({
   const pickFile = async (f: File | undefined) => {
     if (!f) return;
     try {
-      setImage(await fileToDataUrl(f));
+      // Compression auto : max 900px, JPEG 0.82 → ~150-300 Ko (léger même à 500 produits).
+      const url = await fileToDataUrl(f);
+      setImage(url);
+      setPhotoKB(Math.round((url.length * 3) / 4 / 1024));
     } catch {
-      setError("Photo illisible — essaie une autre image");
+      setError("Photo illisible — essaie une autre image (JPG/PNG, pas HEIC iPhone)");
     }
   };
 
@@ -125,11 +129,16 @@ export default function ProductForm({
             <Link2 size={13} className="shrink-0 text-cream/40" />
             <input
               value={image.startsWith("data:") ? "" : image}
-              onChange={(e) => setImage(e.target.value)}
+              onChange={(e) => { setImage(e.target.value); setPhotoKB(0); }}
               placeholder="…ou colle un lien image (https://)"
               className="w-full rounded-xl border border-white/12 bg-ink px-3 py-1.5 text-xs outline-none focus:border-signal"
             />
           </div>
+          {photoKB > 0 && (
+            <p className="mt-1.5 text-xs font-bold text-[#25D366]">
+              Photo compressée ✓ ~{photoKB} Ko — léger pour le site
+            </p>
+          )}
         </div>
       </div>
 
