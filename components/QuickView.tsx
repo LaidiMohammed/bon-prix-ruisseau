@@ -79,13 +79,17 @@ export default function QuickView({
             onClick={(e) => e.stopPropagation()}
             className="arch-sm flex max-h-[94svh] w-full max-w-3xl flex-col overflow-hidden border border-white/15 bg-coal lg:grid lg:grid-cols-2"
           >
-            {/* photo compacte : tient sur un écran téléphone */}
-            <div className="relative h-32 w-full min-w-0 shrink-0 overflow-hidden sm:h-52 lg:h-auto lg:min-h-full">
+            {/* photo visible + compacte : tient sur un écran téléphone */}
+            <div className="relative h-44 w-full min-w-0 shrink-0 overflow-hidden sm:h-52 lg:h-auto lg:min-h-full">
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={product.image}
                 alt={product.name}
                 decoding="async"
+                onError={(e) => {
+                  const t = e.currentTarget;
+                  if (!t.src.endsWith("/logo.jpg")) t.src = "/logo.jpg";
+                }}
                 className="absolute inset-0 h-full w-full object-cover"
               />
               <div className="absolute inset-0 bg-gradient-to-t from-ink/70 to-transparent lg:bg-gradient-to-r" />

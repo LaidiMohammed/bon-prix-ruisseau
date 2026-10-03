@@ -3,11 +3,13 @@
 import { motion } from "framer-motion";
 
 export default function Template({ children }: { children: React.ReactNode }) {
+  // Entrée sans flou : même si l'animation coince sur un téléphone lent,
+  // la page reste lisible (opacité seule, jamais de blur bloquant).
   return (
     <motion.main
-      initial={{ opacity: 0, scale: 0.985, filter: "blur(6px)" }}
-      animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
-      transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
     >
       {children}
     </motion.main>

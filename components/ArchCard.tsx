@@ -35,6 +35,11 @@ export default function ArchCard({
             alt={product.name}
             loading="lazy"
             decoding="async"
+            onError={(e) => {
+              // Lien mort (ex. Facebook expiré) → logo, jamais de trou.
+              const t = e.currentTarget;
+              if (!t.src.endsWith("/logo.jpg")) t.src = "/logo.jpg";
+            }}
             className={`h-full w-full object-cover transition duration-700 group-hover:scale-110 ${
               inStock ? "" : "opacity-70 grayscale-[0.5]"
             }`}

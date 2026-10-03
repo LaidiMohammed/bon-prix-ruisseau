@@ -88,7 +88,15 @@ export function CartDrawer() {
                       className="flex gap-3 rounded-3xl border border-white/10 bg-ink p-3"
                     >
                       {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={i.image} alt="" className="h-20 w-16 rounded-2xl object-cover" />
+                      <img
+                        src={i.image}
+                        alt=""
+                        onError={(e) => {
+                          const t = e.currentTarget;
+                          if (!t.src.endsWith("/logo.jpg")) t.src = "/logo.jpg";
+                        }}
+                        className="h-20 w-16 rounded-2xl object-cover"
+                      />
                       <div className="min-w-0 flex-1">
                         <p className="truncate text-sm font-bold">{i.name}</p>
                         <p className="text-xs text-cream/50">Taille: {i.size}</p>

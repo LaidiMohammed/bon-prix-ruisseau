@@ -63,12 +63,18 @@ body {
   animation: bpr-kenburns 18s ease-in-out infinite alternate;
 }
 
-/* arch cards: round top like boutique vitrine */
+/* arch cards: round top like boutique vitrine.
+   Modal (arch-sm) : coins doux sur téléphone (pas de rognage), arche sur PC. */
 .arch {
   border-radius: 999px 999px 1.75rem 1.75rem;
 }
 .arch-sm {
-  border-radius: 999px 999px 1.25rem 1.25rem;
+  border-radius: 1.75rem;
+}
+@media (min-width: 1024px) {
+  .arch-sm {
+    border-radius: 999px 999px 1.25rem 1.25rem;
+  }
 }
 
 /* glass */
