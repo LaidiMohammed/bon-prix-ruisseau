@@ -13,6 +13,7 @@ import {
 } from "@/lib/catalog-admin";
 import OrdersAdmin from "@/components/OrdersAdmin";
 import AdminSecurity from "@/components/AdminSecurity";
+import SafeImg from "@/components/SafeImg";
 import ProductForm from "@/components/ProductForm";
 
 const PASS = "bpr2026"; // mode local uniquement (sans backend)
@@ -338,8 +339,7 @@ export default function AdminPage() {
             <div className="mt-4 grid gap-3">
               {products.map((p) => (
                 <div key={p.id} className="flex items-center gap-4 rounded-3xl border border-white/12 bg-coal p-4">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={p.image} alt="" className="h-16 w-16 rounded-2xl object-cover" />
+                  <SafeImg src={p.image} alt="" className="h-16 w-16 rounded-2xl object-cover" />
                   <div className="min-w-0 flex-1">
                     <p className="truncate font-bold">{p.name}</p>
                     <p className="text-xs text-cream/50">

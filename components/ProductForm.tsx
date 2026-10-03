@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { ImagePlus, Link2, Save, X } from "lucide-react";
 import { CATEGORIES, type Product } from "@/lib/mock-data";
+import SafeImg from "./SafeImg";
 
 const inputCls =
   "w-full rounded-2xl border border-white/12 bg-ink px-4 py-2.5 text-sm outline-none focus:border-signal";
@@ -101,8 +102,7 @@ export default function ProductForm({
     <div className="rounded-[1.75rem] border border-signal/40 bg-coal p-5 sm:p-6">
       <div className="flex items-center gap-4">
         {image ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={image} alt="" className="h-24 w-20 rounded-2xl border border-white/15 object-cover" />
+          <SafeImg src={image} alt="" className="h-24 w-20 rounded-2xl border border-white/15 object-cover" />
         ) : (
           <div className="grid h-24 w-20 place-items-center rounded-2xl border border-dashed border-white/25 bg-white/5 text-cream/40">
             <ImagePlus size={26} />

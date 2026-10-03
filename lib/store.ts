@@ -94,7 +94,8 @@ const SIZE_ORDER = ["XS", "S", "M", "L", "XL", "XXL", "3XL", "6A", "8A", "10A", 
 
 function toProduct(p: DbProduct, catName: Map<string, string>): Product {
   const variants = (p.product_variants ?? []).filter((v) => v.is_active);
-  const sizes = [...new Set(variants.filter((v) => v.stock > 0).map((v) => v.size))].sort(
+  // Tailles normalisées en MAJUSCULES (l'admin tape parfois "xxl").
+  const sizes = [...new Set(variants.filter((v) => v.stock > 0).map((v) => v.size.toUpperCase()))].sort(
     (a, b) => {
       const ia = SIZE_ORDER.indexOf(a);
       const ib = SIZE_ORDER.indexOf(b);

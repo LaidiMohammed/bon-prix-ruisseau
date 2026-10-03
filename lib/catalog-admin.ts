@@ -104,17 +104,19 @@ async function writeVariants(
     .delete()
     .eq("product_id", productId);
   if (delErr) throw new Error("Remplacement du stock impossible");
-  if (sizes.length === 0) return;
+  // Normalise : MAJUSCULES + dédoublonne ("XL, xl" => une seule variante).
+  const cleanSizes = [...new Set(sizes.map((s) => s.toUpperCase().trim()).filter(Boolean))];
+  if (cleanSizes.length === 0) return;
   const prefix = slug.split("-").slice(0, 3).join("-").toUpperCase() || "BPR";
-  const per = splitStock(stock, sizes.length);
+  const per = splitStock(stock, cleanSizes.length);
   const { error: insErr } = await client.from("product_variants").insert(
-    sizes.map((size, i) => ({
+    cleanSizes.map((rawSize, i) => ({
       product_id: productId,
-      size,
+      size: rawSize.toUpperCase(), // normalisé : jamais de "xxl" minuscule
       color_name_fr: "",
       color_name_ar: "",
       color_hex: "",
-      sku: `${prefix}-${size.toUpperCase()}-${rand4()}`.slice(0, 60),
+      sku: `${prefix}-${rawSize.toUpperCase()}-${rand4()}`.slice(0, 60),
       price_override: null,
       stock: per[i],
       is_active: true,

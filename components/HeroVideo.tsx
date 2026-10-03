@@ -3,14 +3,14 @@
 import { useState } from "react";
 import { AnimatePresence } from "framer-motion";
 import { HERO } from "@/lib/mock-data";
+import SafeImg from "./SafeImg";
 
 export default function HeroVideo({ videoUrl }: { videoUrl: string }) {
   const [videoOk, setVideoOk] = useState(true);
   return (
     <div className="absolute inset-0 overflow-hidden">
       {/* Ken-burns poster always present */}
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img
+      <SafeImg
         src={HERO.poster}
         alt="Bon Prix Ruisseau"
         className="animate-kenburns h-full w-full object-cover"

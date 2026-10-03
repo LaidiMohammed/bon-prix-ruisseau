@@ -2,6 +2,7 @@
 
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
+import SafeImg from "./SafeImg";
 
 export default function ZoomBg({
   src,
@@ -21,8 +22,7 @@ export default function ZoomBg({
   return (
     <div ref={ref} className="fixed inset-0 -z-10 overflow-hidden bg-ink">
       <motion.div style={{ scale, opacity }} className="h-full w-full">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img
+        <SafeImg
           src={src}
           alt=""
           className="h-full w-full object-cover"

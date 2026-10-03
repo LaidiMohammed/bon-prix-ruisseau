@@ -2,6 +2,7 @@
 
 import { Award, Heart, ShieldCheck, Users } from "lucide-react";
 import Reveal from "@/components/Reveal";
+import SafeImg from "@/components/SafeImg";
 import SectionHeading from "@/components/SectionHeading";
 import ZoomBg from "@/components/ZoomBg";
 import { useSiteData } from "@/lib/store";
@@ -29,8 +30,7 @@ export default function AboutPage() {
 
         <div className="mt-12 grid gap-4 sm:grid-cols-2">
           <Reveal className="glass overflow-hidden rounded-[2rem] border border-white/12">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={settings.backgrounds.home} alt="Magasin" className="h-64 w-full object-cover" />
+            <SafeImg src={settings.backgrounds.home} alt="Magasin" className="h-64 w-full object-cover" />
             <div className="p-7">
               <p className="font-display text-2xl uppercase">Le magasin</p>
               <p className="mt-2 text-cream/70">
@@ -39,8 +39,7 @@ export default function AboutPage() {
             </div>
           </Reveal>
           <Reveal delay={0.1} className="glass overflow-hidden rounded-[2rem] border border-white/12">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={settings.backgrounds.shop} alt="Collection" className="h-64 w-full object-cover" />
+            <SafeImg src={settings.backgrounds.shop} alt="Collection" className="h-64 w-full object-cover" />
             <div className="p-7">
               <p className="font-display text-2xl uppercase">La sélection</p>
               <p className="mt-2 text-cream/70">

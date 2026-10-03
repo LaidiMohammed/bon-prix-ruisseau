@@ -8,6 +8,7 @@ import HeroVideo from "@/components/HeroVideo";
 import Marquee from "@/components/Marquee";
 import QuickView from "@/components/QuickView";
 import Reveal from "@/components/Reveal";
+import SafeImg from "@/components/SafeImg";
 import SectionHeading from "@/components/SectionHeading";
 import { TIKTOK_REELS, type Product } from "@/lib/mock-data";
 import { useSiteData } from "@/lib/store";
@@ -121,8 +122,7 @@ export default function HomePage() {
       <section className="relative overflow-hidden">
         <div className="relative mx-auto max-w-6xl px-5 sm:px-8">
           <Reveal className="relative overflow-hidden rounded-[2.5rem] border border-white/12">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
+            <SafeImg
               src={settings.backgrounds.shop}
               alt="Collection"
               className="h-[420px] w-full object-cover sm:h-[480px]"
@@ -159,8 +159,7 @@ export default function HomePage() {
               target="_blank"
               className="group relative w-44 shrink-0 overflow-hidden rounded-[1.75rem] border border-white/12 sm:w-52"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={r.image} alt={r.label} className="aspect-[9/14] w-full object-cover transition duration-500 group-hover:scale-110" loading="lazy" />
+              <SafeImg src={r.image} alt={r.label} className="aspect-[9/14] w-full object-cover transition duration-500 group-hover:scale-110" loading="lazy" />
               <div className="absolute inset-0 bg-gradient-to-t from-ink/90 via-transparent to-ink/20" />
               <span className="absolute top-3 left-3 rounded-full bg-ink/70 px-2.5 py-1 text-[10px] font-black backdrop-blur">
                 ▶ {r.views}
